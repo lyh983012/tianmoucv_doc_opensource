@@ -117,8 +117,10 @@
              
   <section id="tianmoucv">
 <h1>TianMouCV 算法库<a class="headerlink" href="#tianmoucv" title="Link to this heading"></a></h1>
-<p>TianMouCV 是一个专门为 Tianmouc 传感器（混合事件-帧传感器）设计的高性能计算机视觉库。它结合了传统基于帧（Frame-based）的视觉算法和新兴的基于事件（Event-based）的视觉处理技术，旨在提供高动态范围（HDR）、高帧率重建、低延迟追踪和稳健的光流估计等功能。</p>
-<p>目前文档基于 Tianmoucv-0.3.2 版本已开源。开发版本为 0.3.5.4，待开源。</p>
+<p>TianMouCV是一个专门为Tianmouc传感器（混合时空差分-帧的互补视觉传感器）设计的高性能计算机视觉库。
+它结合了传统基于帧（Frame-based）的视觉算法和新兴的基于时空差分数据（TSD-based）的视觉处理技术
+旨在提供高动态范围（HDR）、高帧率重建，支持低延迟追踪、检测、交互和稳健的光流估计等功能。</p>
+<p>目前文档基于 Tianmoucv-0.4.2.0 版本</p>
 <nav class="contents local" id="id1">
 <p class="topic-title">目录</p>
 <ul class="simple">
@@ -151,7 +153,6 @@
 </nav>
 <section id="id2">
 <h2><a class="toc-backref" href="#id7" role="doc-backlink">安装指南</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
-<p>如果你使用的是 preview 版本，请将下文中的 <code class="docutils literal notranslate"><span class="pre">tianmoucv</span></code> 替换为 <code class="docutils literal notranslate"><span class="pre">Tianmoucv_preview</span></code>。</p>
 <section id="unix">
 <h3><a class="toc-backref" href="#id8" role="doc-backlink">Unix 系统安装</a><a class="headerlink" href="#unix" title="Link to this heading"></a></h3>
 <ol class="arabic simple">
@@ -180,8 +181,8 @@ conda<span class="w"> </span>install<span class="w"> </span>pytorch<span class="
 </pre></div>
 </div>
 <p>或者从源码安装：</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Tianmouc/tianmoucv_preview.git
-<span class="nb">cd</span><span class="w"> </span>tianmoucv_preview
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Tianmouc/tianmoucv.git
+<span class="nb">cd</span><span class="w"> </span>tianmoucv
 sh<span class="w"> </span>install.sh
 </pre></div>
 </div>
