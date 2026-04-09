@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tianmoucv.proc.opticalflow.spy_net &mdash; Tianmouc alpha 文档</title>
+  <title>tianmoucv.proc.opticalflow.spy_net &mdash; Tianmoucv alpha 文档</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
 
@@ -32,7 +32,7 @@
           
           
           <a href="../../../../index.html" class="icon icon-home">
-            Tianmouc
+            Tianmoucv
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
@@ -53,7 +53,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../../index.html">Tianmouc</a>
+          <a href="../../../../index.html">Tianmoucv</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -105,7 +105,7 @@
         <span class="n">current_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="n">ckpt_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ckpt_path</span> <span class="o">=</span> <span class="s1">&#39;https://cloud.tsinghua.edu.cn/f/84ac6e32060443e2975d/?dl=1&#39;</span>
+            <span class="n">ckpt_path</span> <span class="o">=</span> <span class="s1">&#39;http://www.tianmouc.cn:38328/index.php/s/LC8xEj3HrmeyA9Y/download/of_0918_ver_best.ckpt&#39;</span>
         <span class="n">status</span> <span class="o">=</span> <span class="n">check_url_or_local_path</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;loading..:&#39;</span><span class="p">,</span><span class="n">ckpt_path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -120,7 +120,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">imgsize</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gridX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gridY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">))</span>
         
-        <span class="n">dict1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+        <span class="n">dict1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">),</span><span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">dict1</span> <span class="o">=</span> <span class="n">dict1</span><span class="p">[</span><span class="s1">&#39;state_dict_OF&#39;</span><span class="p">]</span>
         <span class="n">dict_flowComp</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dict1</span><span class="p">:</span>
@@ -171,6 +171,38 @@
         <span class="n">frameTime</span> <span class="o">=</span> <span class="n">etime</span> <span class="o">-</span> <span class="n">stime</span>
         <span class="nb">print</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">frameTime</span><span class="p">,</span> <span class="s1">&#39;fps&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Flow_1_0</span></div>
+
+
+
+<div class="viewcode-block" id="TianmoucOF_SpyNet.forward">
+<a class="viewcode-back" href="../../../../tianmoucv/introduction.html#tianmoucv.proc.opticalflow.spy_net.TianmoucOF_SpyNet.forward">[文档]</a>
+    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span> 
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">TD_0_t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span><span class="n">SD0</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span><span class="n">SD1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span><span class="n">print_fps</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Args:</span>
+<span class="sd">          @tsdiff: [c,n,w,h], -1~1,torch，decoder的输出直接concate的结果</span>
+<span class="sd">          </span>
+<span class="sd">          @t1,t2 \in [0,n]  calculate the OF between t1-t2</span>
+<span class="sd">          </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flowComp</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">device</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">TD_0_t</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+            <span class="n">TD_0_t</span> <span class="o">=</span> <span class="n">TD_0_t</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">SD0</span> <span class="o">=</span> <span class="n">SD0</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">SD1</span> <span class="o">=</span> <span class="n">SD1</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">TD_t_0</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">TD_0_t</span> 
+        <span class="c1"># Part1. warp</span>
+        <span class="n">stime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">flow_init</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">Flow_1_0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flowComp</span><span class="p">(</span><span class="n">TD_t_0</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">SD0</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">),</span> <span class="n">SD1</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">))</span> <span class="c1">#输出值0~1</span>
+        <span class="n">etime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">frameTime</span> <span class="o">=</span> <span class="n">etime</span> <span class="o">-</span> <span class="n">stime</span>
+        <span class="k">if</span> <span class="n">print_fps</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">frameTime</span><span class="p">,</span> <span class="s1">&#39;batch/fps&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Flow_1_0</span></div>
 </div>
 
 </pre></div>
@@ -182,7 +214,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; 版权所有 2024, THU-CBICR。</p>
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
   </div>
 
   利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 

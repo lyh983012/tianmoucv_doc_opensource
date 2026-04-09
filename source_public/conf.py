@@ -14,15 +14,14 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../'))
-sys.path.insert(0, os.path.abspath('../../tianmoucalg_new'))
 
 os.environ['PYTORCH_JIT'] = '0'
 print('sys.path', sys.path)
 print('list dir', os.listdir(sys.path[0]))
 # -- Project information -----------------------------------------------------
 
-project = 'Tianmouc'
-copyright = '2024, THU-CBICR'
+project = 'Tianmoucv'
+copyright = '2026, Yihan Lin'
 author = 'Taoyi Wang, Yihan Lin'
 
 # The full version, including alpha/beta/rc tags

@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tianmoucv.sim.simple_tmc_sim_advance &mdash; Tianmoucv alpha 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=406e4f49"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Tianmoucv
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Outline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tianmoucv/introduction.html">TianMouCV 算法库</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Tianmoucv</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">tianmoucv.sim.simple_tmc_sim_advance</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>tianmoucv.sim.simple_tmc_sim_advance 源代码</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Author：Taoyi</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">torchvision</span>
+<span class="kn">from</span> <span class="nn">tianmoucv.isp</span> <span class="kn">import</span> <span class="n">SD2XY</span><span class="p">,</span> <span class="n">upsample_cross_conv</span>
+<span class="c1">### Load parameters</span>
+
+<span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span><span class="s1">&#39;simpleSim_params.json&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">sim_parama</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="n">adc_bit_prec</span> <span class="o">=</span> <span class="n">sim_parama</span><span class="p">[</span><span class="s1">&#39;adc_bit_prec&#39;</span><span class="p">]</span>
+<span class="n">dark_fpn_stat</span> <span class="o">=</span> <span class="n">sim_parama</span><span class="p">[</span><span class="s1">&#39;dark_fpn_stat&#39;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">adc_bit_prec</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dark_fpn_stat</span><span class="p">:</span>
+        <span class="c1"># 确保值是列表或NumPy数组，然后除以128</span>
+        <span class="n">dark_fpn_stat</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">dark_fpn_stat</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">/</span> <span class="mi">128</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only support 8bit ADC now!&quot;</span><span class="p">)</span>
+
+<span class="n">digital_type</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">int8</span> <span class="k">if</span> <span class="n">adc_bit_prec</span> <span class="o">&lt;=</span> <span class="mi">8</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">int16</span> <span class="k">if</span> <span class="n">adc_bit_prec</span> <span class="o">&lt;=</span> <span class="mi">16</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">int32</span> <span class="k">if</span> <span class="n">adc_bit_prec</span> <span class="o">&lt;=</span> <span class="mi">24</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
+
+<span class="k">def</span> <span class="nf">sort_filenames</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># 从文件名中提取数字部分</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;[0-9]+&#39;</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+
+<span class="k">def</span> <span class="nf">shift_rotate_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">shift_dx</span><span class="p">,</span><span class="n">shift_dy</span><span class="p">,</span> <span class="n">rotate_degrees</span><span class="p">):</span>
+
+    <span class="n">transformed_tensor</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">affine</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> 
+                                                                  <span class="n">translate</span><span class="o">=</span><span class="p">(</span><span class="n">shift_dx</span><span class="p">,</span><span class="n">shift_dy</span><span class="p">),</span> 
+                                                                  <span class="n">angle</span><span class="o">=</span><span class="n">rotate_degrees</span><span class="p">,</span> 
+                                                                  <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+                                                                  <span class="n">shear</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">transformed_tensor</span>
+
+<div class="viewcode-block" id="push_to_fifo">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.sim.simple_tmc_sim_advance.push_to_fifo">[文档]</a>
+<span class="k">def</span> <span class="nf">push_to_fifo</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;push to fifo, depth = self defined</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tensor (torch.tensor): fifo tensor</span>
+<span class="sd">        x (torch.tensor): new data</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       torch.tensor : new fifo tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">x</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="visualize_diff">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.sim.simple_tmc_sim_advance.visualize_diff">[文档]</a>
+<span class="k">def</span> <span class="nf">visualize_diff</span><span class="p">(</span><span class="n">diff_out</span><span class="p">,</span> <span class="n">vis_gain</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;rg&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;diff data visualization</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        diff_out (_type_): _description_</span>
+<span class="sd">        vis_gain (_type_): _description_</span>
+<span class="sd">        color (str, optional): _description_. Defaults to &#39;rg&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">diff_out</span><span class="o">.</span><span class="n">shape</span>
+   
+    <span class="k">if</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;rg&#39;</span> <span class="ow">or</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;rgwb&#39;</span><span class="p">:</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">*</span> <span class="n">vis_gain</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="mi">255</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+        <span class="n">diff_vis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">diff_pos</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">diff_neg</span> <span class="o">=</span> <span class="o">-</span><span class="n">diff</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>    
+        <span class="n">diff_vis</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff_pos</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">diff_vis</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff_neg</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">diff_vis</span>
+
+    <span class="k">elif</span> <span class="n">color</span> <span class="o">==</span> <span class="s1">&#39;gray&#39;</span><span class="p">:</span>
+        <span class="n">diff_vis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">*</span> <span class="n">vis_gain</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="mi">127</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">127</span><span class="p">)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">+</span> <span class="mi">127</span>
+        <span class="c1">#diff = diff </span>
+        <span class="n">diff_vis</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diff_vis</span></div>
+
+ 
+
+<span class="k">def</span> <span class="nf">diff_quant</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+    <span class="n">max_digi_num</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">adc_bit_prec</span><span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">lin_lsb</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">max_digi_num</span>
+    <span class="n">diff_th</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff</span> <span class="o">-</span> <span class="n">th</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="n">th</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">diff</span> <span class="o">+</span> <span class="n">th</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">th</span><span class="p">)</span>
+    <span class="n">diff_quantized</span> <span class="o">=</span> <span class="n">diff_th</span> <span class="o">/</span> <span class="n">lin_lsb</span>
+    <span class="n">diff_quantized</span> <span class="o">=</span> <span class="n">diff_quantized</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="n">max_digi_num</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">max_digi_num</span><span class="p">)</span>
+    <span class="n">diff_quantized</span> <span class="o">=</span> <span class="n">diff_quantized</span><span class="o">.</span><span class="n">ceil</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">diff_quantized</span><span class="o">.</span><span class="n">floor</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">diff_quantized</span> <span class="o">=</span> <span class="n">diff_quantized</span><span class="o">.</span><span class="n">char</span><span class="p">()</span> <span class="k">if</span> <span class="n">digital_type</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">int8</span> \
+        <span class="k">else</span> <span class="n">diff_quantized</span><span class="o">.</span><span class="n">short</span><span class="p">()</span> <span class="k">if</span> <span class="n">digital_type</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">int16</span> \
+        <span class="k">else</span> <span class="n">diff_quantized</span><span class="o">.</span><span class="n">int</span><span class="p">()</span> <span class="k">if</span> <span class="n">digital_type</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">int32</span> \
+        <span class="k">else</span> <span class="n">diff_quantized</span>
+
+    <span class="k">return</span> <span class="n">diff_quantized</span>
+
+<div class="viewcode-block" id="diff_response">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.sim.simple_tmc_sim_advance.diff_response">[文档]</a>
+<span class="k">def</span> <span class="nf">diff_response</span><span class="p">(</span><span class="n">pix_v_out</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">sim_cnt</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">fpn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    :param pix_v_out, original input, please convert to float: 3D tensor, [2, H, W]</span>
+<span class="sd">    :param threshold: dict, {&#39;td&#39;: float, &#39;sd&#39;: float}</span>
+<span class="sd">    :param sim_cnt: int, simulation counter, the number of frames simulated</span>
+<span class="sd">    :param device: torch.device, cuda or cpu</span>
+<span class="sd">    :param fpn: dict, optional fixed pattern noise</span>
+<span class="sd">    :param xy: bool, whether to return SDX and SDY</span>
+<span class="sd">    :return: td_quantized, sdl_quant, sdr_quant (or sdx, sdy if xy=True)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">assert</span> <span class="n">pix_v_out</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+    <span class="n">td_th</span> <span class="o">=</span> <span class="n">threshold</span><span class="p">[</span><span class="s1">&#39;td&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">sim_cnt</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">:</span>
+        <span class="n">x_s</span><span class="p">,</span> <span class="n">y_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">)),</span><span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+        <span class="n">response_org</span> <span class="o">=</span> <span class="n">pix_v_out</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">matShift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">x_s</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">y_s</span><span class="p">]])</span>
+        <span class="n">response_shift</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">warpAffine</span><span class="p">(</span><span class="n">response_org</span><span class="p">,</span> <span class="n">matShift</span><span class="p">,(</span><span class="n">response_org</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">response_org</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">torch_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">response_shift</span><span class="p">)</span>
+
+        <span class="n">response_shift</span> <span class="o">=</span> <span class="n">torch_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="c1">#torch.FloatTensor(response_shift, device=device)</span>
+        <span class="n">temp_diff</span> <span class="o">=</span> <span class="n">response_shift</span> <span class="o">-</span> <span class="n">response_org</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">temp_diff</span> <span class="o">=</span> <span class="n">pix_v_out</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">pix_v_out</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    
+    <span class="c1"># ADVANCED FPN for TD</span>
+    <span class="k">if</span> <span class="n">fpn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sim_cnt</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">td_fpn</span> <span class="o">=</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;td_even&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">td_fpn</span> <span class="o">=</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;td_odd&#39;</span><span class="p">]</span>
+        <span class="n">temp_diff</span> <span class="o">+=</span> <span class="n">td_fpn</span>
+    
+    <span class="c1"># get quantized TD</span>
+    <span class="n">td_quantized</span> <span class="o">=</span> <span class="n">diff_quant</span><span class="p">(</span><span class="n">temp_diff</span><span class="p">,</span> <span class="n">td_th</span><span class="p">)</span>
+    
+    <span class="c1">### SD Calculation</span>
+    <span class="n">sd_th</span> <span class="o">=</span> <span class="n">threshold</span><span class="p">[</span><span class="s1">&#39;sd&#39;</span><span class="p">]</span>
+    <span class="n">sd_cal</span> <span class="o">=</span> <span class="n">pix_v_out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">sd_cal</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">sdl</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">sd_cal</span><span class="p">)</span>
+    <span class="n">sdr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">sd_cal</span><span class="p">)</span>
+
+    <span class="c1"># Correct SD formulas: Minuends are ALWAYS odd rows</span>
+    <span class="c1"># Due to the ROD layout (Even rows shifted left by 1 pixel):</span>
+    <span class="c1"># - SDL calculation (vertical in ROD grid) is physically Center - Left</span>
+    <span class="c1"># - SDR calculation (diagonal in ROD grid) is physically Center - Right</span>
+    <span class="c1"># </span>
+    <span class="k">if</span> <span class="n">H</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">W</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># SDL Calculation (Physically Center - Left)</span>
+        <span class="c1"># Even rows</span>
+        <span class="n">sdl</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="p">]</span> <span class="o">=</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">H</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="p">]</span> <span class="o">-</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="p">]</span>
+        <span class="c1"># Odd rows</span>
+        <span class="n">sdl</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="p">]</span> <span class="o">=</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="p">]</span> <span class="o">-</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">H</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="p">]</span>
+        <span class="c1"># SDR Calculation (Physically Center - Right)</span>
+        <span class="c1"># Even rows</span>
+        <span class="n">sdr</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">H</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="n">W</span><span class="p">]</span>
+        <span class="c1"># Odd rows</span>
+        <span class="n">sdr</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">H</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">W</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">sd_cal</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="n">H</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="n">W</span><span class="p">]</span>
+    
+    <span class="c1">### ADVANCED NOISE SIMULATION FPN for SD</span>
+    <span class="k">if</span> <span class="n">fpn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sim_cnt</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sdl_fpn</span> <span class="o">=</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdl_even&#39;</span><span class="p">]</span>
+            <span class="n">sdr_fpn</span> <span class="o">=</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdr_even&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sdl_fpn</span> <span class="o">=</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdl_odd&#39;</span><span class="p">]</span>
+            <span class="n">sdr_fpn</span> <span class="o">=</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdr_odd&#39;</span><span class="p">]</span>
+        <span class="n">sdl</span> <span class="o">+=</span> <span class="n">sdl_fpn</span>
+        <span class="n">sdr</span> <span class="o">+=</span> <span class="n">sdr_fpn</span>
+
+    <span class="k">if</span> <span class="n">xy</span><span class="p">:</span>
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">sdx</span><span class="p">,</span> <span class="n">sdy</span> <span class="o">=</span> <span class="n">SD2XY</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
+        <span class="n">sdx_quant</span> <span class="o">=</span> <span class="n">diff_quant</span><span class="p">(</span><span class="n">sdx</span><span class="p">,</span> <span class="n">sd_th</span><span class="p">)</span>
+        <span class="n">sdy_quant</span> <span class="o">=</span> <span class="n">diff_quant</span><span class="p">(</span><span class="n">sdy</span><span class="p">,</span> <span class="n">sd_th</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">td_quantized</span><span class="p">,</span> <span class="n">sdx_quant</span><span class="p">,</span> <span class="n">sdy_quant</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># get quantized SD left and right</span>
+        <span class="n">sdl_quant</span> <span class="o">=</span> <span class="n">diff_quant</span><span class="p">(</span><span class="n">sdl</span><span class="p">,</span> <span class="n">sd_th</span><span class="p">)</span>
+        <span class="n">sdr_quant</span> <span class="o">=</span> <span class="n">diff_quant</span><span class="p">(</span><span class="n">sdr</span><span class="p">,</span> <span class="n">sd_th</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">td_quantized</span><span class="p">,</span> <span class="n">sdl_quant</span><span class="p">,</span> <span class="n">sdr_quant</span></div>
+
+
+<div class="viewcode-block" id="get_fpn_from_stat">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.sim.simple_tmc_sim_advance.get_fpn_from_stat">[文档]</a>
+<span class="k">def</span> <span class="nf">get_fpn_from_stat</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate Fixed Pattern Noise (FPN) from dark_fpn_stat.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fixed_td_noise_odd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;td_odd_mean&#39;</span><span class="p">],</span> 
+                                      <span class="n">std</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;td_odd_std&#39;</span><span class="p">],</span> 
+                                      <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">fixed_sdl_noise_odd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdl_odd_mean&#39;</span><span class="p">],</span> 
+                                       <span class="n">std</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdl_odd_std&#39;</span><span class="p">],</span> 
+                                       <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">fixed_sdr_noise_odd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdr_odd_mean&#39;</span><span class="p">],</span>
+                                       <span class="n">std</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdr_odd_std&#39;</span><span class="p">],</span> 
+                                       <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">fixed_td_noise_even</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;td_even_mean&#39;</span><span class="p">],</span>
+                                       <span class="n">std</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;td_even_std&#39;</span><span class="p">],</span> 
+                                       <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">fixed_sdl_noise_even</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdl_even_mean&#39;</span><span class="p">],</span> 
+                                        <span class="n">std</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdl_even_std&#39;</span><span class="p">],</span> 
+                                        <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">fixed_sdr_noise_even</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdr_even_mean&#39;</span><span class="p">],</span>
+                                        <span class="n">std</span><span class="o">=</span><span class="n">dark_fpn_stat</span><span class="p">[</span><span class="s1">&#39;sdr_even_std&#39;</span><span class="p">],</span>
+                                        <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">fpn</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;td_odd&#39;</span><span class="p">:</span> <span class="n">fixed_td_noise_odd</span><span class="p">,</span>
+        <span class="s1">&#39;sdl_odd&#39;</span><span class="p">:</span> <span class="n">fixed_sdl_noise_odd</span><span class="p">,</span>
+        <span class="s1">&#39;sdr_odd&#39;</span><span class="p">:</span> <span class="n">fixed_sdr_noise_odd</span><span class="p">,</span>
+        <span class="s1">&#39;td_even&#39;</span><span class="p">:</span> <span class="n">fixed_td_noise_even</span><span class="p">,</span>
+        <span class="s1">&#39;sdl_even&#39;</span><span class="p">:</span> <span class="n">fixed_sdl_noise_even</span><span class="p">,</span>
+        <span class="s1">&#39;sdr_even&#39;</span><span class="p">:</span> <span class="n">fixed_sdr_noise_even</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">fpn</span></div>
+
+
+<span class="k">def</span> <span class="nf">sample_sensor_fixed_noise</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> 
+                               <span class="n">sensor_fixed_noise_prob</span><span class="p">,</span> 
+                               <span class="n">sensor_fixed_noise_mean_ch0</span><span class="p">,</span> <span class="n">sensor_fixed_noise_std_ch0</span><span class="p">,</span>
+                               <span class="n">sensor_fixed_noise_mean_ch12</span><span class="p">,</span> <span class="n">sensor_fixed_noise_std_ch12</span><span class="p">):</span>
+    <span class="n">rod_height</span> <span class="o">=</span> <span class="n">sensor_height</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">rod_width</span> <span class="o">=</span> <span class="n">sensor_width</span> <span class="o">//</span> <span class="mi">4</span>
+    <span class="n">fixed_noise_map</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">sensor_fixed_noise_prob</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">sensor_fixed_noise_prob</span><span class="p">:</span>
+        <span class="n">fixed_noise_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sensor_fixed_noise_std_ch0</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fixed_noise_map</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">sensor_fixed_noise_mean_ch0</span><span class="p">,</span> 
+                                                <span class="n">scale</span><span class="o">=</span><span class="n">sensor_fixed_noise_std_ch0</span><span class="p">,</span> 
+                                                <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sensor_fixed_noise_std_ch12</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">shared_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">sensor_fixed_noise_mean_ch12</span><span class="p">,</span> 
+                                        <span class="n">scale</span><span class="o">=</span><span class="n">sensor_fixed_noise_std_ch12</span><span class="p">,</span> 
+                                        <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">fixed_noise_map</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">shared_map</span>
+            <span class="n">fixed_noise_map</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">shared_map</span>
+        <span class="n">fixed_noise_map</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">fixed_noise_map</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fixed_noise_map</span>
+
+<span class="k">def</span> <span class="nf">apply_gray_jitter</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">gray_weight_jitter</span><span class="p">,</span> <span class="n">gray_gain_min</span><span class="p">,</span> <span class="n">gray_gain_max</span><span class="p">):</span>
+    <span class="n">gray_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.299</span><span class="p">,</span> <span class="mf">0.587</span><span class="p">,</span> <span class="mf">0.114</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">gray_gain</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">if</span> <span class="n">gray_weight_jitter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">gray_weight_jitter</span><span class="p">,</span> <span class="n">gray_weight_jitter</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">gray_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">gray_weights</span> <span class="o">+</span> <span class="n">delta</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">gray_weights</span> <span class="o">=</span> <span class="n">gray_weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gray_weights</span><span class="p">)</span>
+        <span class="n">gray_gain</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">gray_gain_min</span><span class="p">,</span> <span class="n">gray_gain_max</span><span class="p">))</span>
+        
+        <span class="n">img_rgb</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2RGB</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.0</span>
+        <span class="n">img_gray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span><span class="n">img_rgb</span><span class="p">,</span> <span class="n">gray_weights</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">img_gray</span> <span class="o">=</span> <span class="p">(</span><span class="n">img_gray</span> <span class="o">*</span> <span class="n">gray_gain</span> <span class="o">*</span> <span class="mf">255.0</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">img_gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">img_gray</span>
+
+<span class="k">def</span> <span class="nf">get_rod_img</span><span class="p">(</span><span class="n">img_gray_tensor</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">img_gray_tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span> <span class="c1"># [C, H, W]</span>
+        <span class="n">img_gray_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">img_gray_tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># [H, W]</span>
+    
+    <span class="n">etron_img_rod</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">etron_img_bin</span> <span class="o">=</span> <span class="p">(</span><span class="n">img_gray_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">img_gray_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> 
+                     <span class="n">img_gray_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">img_gray_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="mi">4</span>
+    
+    <span class="n">etron_img_rod</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">etron_img_bin</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">etron_img_rod</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">etron_img_bin</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">etron_img_rod</span>
+
+<span class="k">def</span> <span class="nf">apply_sensor_noise</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span><span class="p">,</span> <span class="n">fixed_noise_map</span><span class="p">,</span> 
+                       <span class="n">sensor_random_noise_prob</span><span class="p">,</span> <span class="n">sensor_poisson_lambda</span><span class="p">,</span> <span class="n">sensor_random_noise_std</span><span class="p">,</span>
+                       <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">sdl</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">sdr</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fixed_noise_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">td</span> <span class="o">=</span> <span class="n">td</span> <span class="o">+</span> <span class="p">(</span><span class="n">fixed_noise_map</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">128.0</span><span class="p">)</span>
+        <span class="n">sdl</span> <span class="o">=</span> <span class="n">sdl</span> <span class="o">+</span> <span class="p">(</span><span class="n">fixed_noise_map</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">128.0</span><span class="p">)</span>
+        <span class="n">sdr</span> <span class="o">=</span> <span class="n">sdr</span> <span class="o">+</span> <span class="p">(</span><span class="n">fixed_noise_map</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mf">128.0</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">sensor_random_noise_prob</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">sensor_random_noise_prob</span><span class="p">:</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sensor_poisson_lambda</span><span class="p">),</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">std_target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sensor_random_noise_std</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">std_target</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">std_target</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu</span><span class="p">))</span> <span class="o">*</span> <span class="mf">128.0</span>
+            <span class="n">p1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">mu</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+            <span class="n">p2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">mu</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+            <span class="n">skellam_noise</span> <span class="o">=</span> <span class="p">(</span><span class="n">p1</span> <span class="o">-</span> <span class="n">p2</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span>
+            <span class="n">td</span> <span class="o">=</span> <span class="n">td</span> <span class="o">+</span> <span class="n">skellam_noise</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">sdl</span> <span class="o">=</span> <span class="n">sdl</span> <span class="o">+</span> <span class="n">skellam_noise</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">sdr</span> <span class="o">=</span> <span class="n">sdr</span> <span class="o">+</span> <span class="n">skellam_noise</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span>
+
+<span class="k">def</span> <span class="nf">run_sim</span><span class="p">(</span><span class="n">datapath</span><span class="p">,</span><span class="n">sensor_width</span><span class="p">,</span> <span class="n">sensor_height</span><span class="p">,</span>  <span class="n">device</span><span class="p">,</span> <span class="n">display</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+            <span class="n">save_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HOME&#39;</span><span class="p">),</span> <span class="s2">&quot;temp&quot;</span><span class="p">),</span>
+            <span class="n">interp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="c1"># 传感器噪声参数用于噪声增强</span>
+            <span class="n">sensor_fixed_noise_prob</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_prob&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">sensor_random_noise_prob</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_random_noise_prob&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">sensor_fixed_noise_mean_ch0</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_mean_ch0&#39;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+            <span class="n">sensor_fixed_noise_std_ch0</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_std_ch0&#39;</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="mf">128.0</span><span class="p">),</span>
+            <span class="n">sensor_fixed_noise_mean_ch12</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_mean_ch12&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">sensor_fixed_noise_std_ch12</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_std_ch12&#39;</span><span class="p">,</span> <span class="mf">0.4</span> <span class="o">/</span> <span class="mf">128.0</span><span class="p">),</span>
+            <span class="n">sensor_random_noise_std</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_random_noise_std&#39;</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">128.0</span><span class="p">),</span>
+            <span class="n">sensor_poisson_lambda</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_poisson_lambda&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="c1"># 灰度输入扰动参数</span>
+            <span class="n">gray_weight_jitter</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gray_weight_jitter&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">gray_gain_min</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gray_gain_min&#39;</span><span class="p">,</span> <span class="mf">0.78</span><span class="p">),</span>
+            <span class="n">gray_gain_max</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gray_gain_max&#39;</span><span class="p">,</span> <span class="mf">0.88</span><span class="p">),</span>
+            <span class="c1"># 仿真参数</span>
+            <span class="n">sim_threshold_range</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sim_threshold_range&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">]))</span>
+            <span class="p">):</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;读取:&#39;</span><span class="p">,</span><span class="n">datapath</span><span class="p">,</span><span class="s1">&#39;下的所有图像数据，按图像名称排序&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;存储到:&#39;</span><span class="p">,</span><span class="n">save_path</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="c1"># 1. 采样仿真阈值</span>
+    <span class="n">sim_th</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">sim_threshold_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sim_threshold_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="c1"># 2. 采样传感器固定噪声图</span>
+    <span class="n">fixed_noise_map</span> <span class="o">=</span> <span class="n">sample_sensor_fixed_noise</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> 
+                                                <span class="n">sensor_fixed_noise_prob</span><span class="p">,</span> 
+                                                <span class="n">sensor_fixed_noise_mean_ch0</span><span class="p">,</span> <span class="n">sensor_fixed_noise_std_ch0</span><span class="p">,</span>
+                                                <span class="n">sensor_fixed_noise_mean_ch12</span><span class="p">,</span> <span class="n">sensor_fixed_noise_std_ch12</span><span class="p">)</span>
+
+    <span class="c1"># assum you have a png, 8bit rgb dataset</span>
+    <span class="c1"># if use some other dataset, please write your own code</span>
+    <span class="n">flist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">datapath</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">sort_filenames</span><span class="p">)</span>
+    <span class="n">cop_cone_skip</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># the interval of RGB generation </span>
+    <span class="n">sim_cnt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rod_height</span> <span class="o">=</span> <span class="n">sensor_height</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">rod_width</span> <span class="o">=</span> <span class="n">sensor_width</span> <span class="o">//</span> <span class="mi">4</span>
+    <span class="n">rod_v_buf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="c1">### ADVANCED NOISE SIM, Fixed pattern noise odd and ven</span>
+    <span class="n">fpn</span> <span class="o">=</span> <span class="n">get_fpn_from_stat</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="c1"># fixed_td_noise_odd_np = fpn[&#39;td_odd&#39;].cpu().numpy() * 128</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span>
+        <span class="n">rgb_save_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s1">&#39;rgb&#39;</span><span class="p">)</span>
+        <span class="n">tsdiff_save_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s1">&#39;tsdiff&#39;</span><span class="p">)</span>
+        <span class="n">gt_with_noise_save_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s1">&#39;noisy_gt&#39;</span><span class="p">)</span>
+        <span class="n">viz_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s1">&#39;viz&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rgb_save_path</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">rgb_save_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">tsdiff_save_path</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">tsdiff_save_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">gt_with_noise_save_path</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">gt_with_noise_save_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">viz_path</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">viz_path</span><span class="p">)</span>
+        <span class="c1"># Here save Fixed pattern noise</span>
+        <span class="n">all_fpn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;td_odd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                            <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdl_odd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdr_odd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                            <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;td_even&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdl_even&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> 
+                            <span class="n">fpn</span><span class="p">[</span><span class="s1">&#39;sdr_even&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s2">&quot;fpn.npy&quot;</span><span class="p">),</span> <span class="n">all_fpn</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">img_file</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">flist</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">img_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.png&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">img_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.jpg&quot;</span><span class="p">):</span> 
+            <span class="c1"># You can add more endings, liek .bmp, .tiff, etc.</span>
+            
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datapath</span><span class="p">,</span> <span class="n">img_file</span><span class="p">))</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="n">sensor_width</span> <span class="p">,</span><span class="n">sensor_height</span><span class="p">))</span>
+            <span class="c1"># 灰度扰动</span>
+            <span class="n">img_gray</span> <span class="o">=</span> <span class="n">apply_gray_jitter</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">gray_weight_jitter</span><span class="p">,</span> <span class="n">gray_gain_min</span><span class="p">,</span> <span class="n">gray_gain_max</span><span class="p">)</span>
+            <span class="n">img_gray_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">img_gray</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sim_cnt</span> <span class="o">%</span> <span class="n">cop_cone_skip</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rgb</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ShortTensor</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="c1">### ADVANCED NOISE SIM,</span>
+            <span class="c1"># First, possion noise</span>
+            <span class="n">img_gray_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">img_gray_tensor</span><span class="p">)</span>
+
+            <span class="n">img_diff_sim</span> <span class="o">=</span> <span class="n">img_gray_tensor</span> <span class="o">/</span> <span class="mf">255.0</span>
+            <span class="c1"># if you use 10bit, or higher precision img, please divide by the max value!</span>
+            
+            <span class="n">etron_img_rod</span> <span class="o">=</span> <span class="n">get_rod_img</span><span class="p">(</span><span class="n">img_diff_sim</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+            
+            <span class="c1">### ADVANCED SIM for NOISE: Add Norm read noise!</span>
+            <span class="n">etron_img_rod</span> <span class="o">=</span> <span class="n">etron_img_rod</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.008</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="c1"># etron_img_rod </span>
+            
+            <span class="n">img_diff_sim</span> <span class="o">=</span> <span class="n">etron_img_rod</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">rod_v_buf</span> <span class="o">=</span> <span class="n">push_to_fifo</span><span class="p">(</span><span class="n">rod_v_buf</span><span class="p">,</span> <span class="n">img_diff_sim</span><span class="p">)</span>
+            <span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span> <span class="o">=</span> <span class="n">diff_response</span><span class="p">(</span><span class="n">rod_v_buf</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;td&#39;</span><span class="p">:</span> <span class="n">sim_th</span><span class="p">,</span> <span class="s1">&#39;sd&#39;</span><span class="p">:</span> <span class="n">sim_th</span><span class="p">},</span> <span class="n">sim_cnt</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">fpn</span><span class="o">=</span><span class="n">fpn</span><span class="p">)</span>
+
+            <span class="c1"># 传感器噪声增强 (固定噪声 + 随机噪声)</span>
+            <span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span> <span class="o">=</span> <span class="n">apply_sensor_noise</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span><span class="p">,</span> <span class="n">fixed_noise_map</span><span class="p">,</span> 
+                                              <span class="n">sensor_random_noise_prob</span><span class="p">,</span> <span class="n">sensor_poisson_lambda</span><span class="p">,</span> <span class="n">sensor_random_noise_std</span><span class="p">,</span>
+                                              <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">interp</span><span class="p">:</span>
+                <span class="n">tsdiff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># [3, H, W]</span>
+                <span class="c1"># upsample_cross_conv expects [C, T, H, W]</span>
+                <span class="n">tsdiff_expand</span> <span class="o">=</span> <span class="n">upsample_cross_conv</span><span class="p">(</span><span class="n">tsdiff</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># [3, H, W*2]</span>
+                <span class="c1"># bilinear upsample to full size</span>
+                <span class="n">tsdiff_full</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">tsdiff_expand</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">),</span> 
+                                            <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">td</span><span class="p">,</span> <span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span> <span class="o">=</span> <span class="n">tsdiff_full</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tsdiff_full</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">tsdiff_full</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="c1"># Update sizes for visualization if needed</span>
+                <span class="n">cur_rod_h</span><span class="p">,</span> <span class="n">cur_rod_w</span> <span class="o">=</span> <span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span> <span class="o">//</span> <span class="mi">2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cur_rod_h</span><span class="p">,</span> <span class="n">cur_rod_w</span> <span class="o">=</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span>
+
+            <span class="k">if</span> <span class="n">display</span> <span class="ow">or</span> <span class="n">save</span><span class="p">:</span>
+                <span class="n">rgb_np</span> <span class="o">=</span> <span class="n">rgb</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+                <span class="n">td_np</span> <span class="o">=</span> <span class="n">td</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="n">sdl_np</span> <span class="o">=</span> <span class="n">sdl</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="n">sdr_np</span> <span class="o">=</span> <span class="n">sdr</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                
+                <span class="n">tsdiff_raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">td_np</span><span class="p">,</span> <span class="n">sdl_np</span><span class="p">,</span> <span class="n">sdr_np</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="n">td_np_viz</span> <span class="o">=</span> <span class="n">visualize_diff</span><span class="p">(</span><span class="n">td_np</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;rg&#39;</span><span class="p">)</span>
+                <span class="n">sdl_np_viz</span> <span class="o">=</span> <span class="n">visualize_diff</span><span class="p">(</span><span class="n">sdl_np</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;rg&#39;</span><span class="p">)</span>
+                <span class="n">sdr_np_viz</span> <span class="o">=</span> <span class="n">visualize_diff</span><span class="p">(</span><span class="n">sdr_np</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;rg&#39;</span><span class="p">)</span>
+                <span class="n">red_line</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">cur_rod_h</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+                <span class="n">diff_concat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">td_np_viz</span><span class="p">,</span> <span class="n">red_line</span><span class="p">,</span> <span class="n">sdl_np_viz</span><span class="p">,</span> <span class="n">red_line</span><span class="p">,</span>
+                                <span class="n">sdr_np_viz</span><span class="p">),</span>
+                               <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                
+                <span class="c1">### for visualization</span>
+                <span class="n">sd_merge_viz</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">addWeighted</span><span class="p">(</span><span class="n">sdl_np_viz</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">sdr_np_viz</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">tsd_viz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">td_np_viz</span><span class="p">,</span> <span class="p">(</span><span class="n">cur_rod_w</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cur_rod_h</span><span class="p">)),</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">sd_merge_viz</span><span class="p">,</span> <span class="p">(</span><span class="n">cur_rod_w</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cur_rod_h</span><span class="p">))),</span>
+                            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">rgb_tsd_viz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">rgb_np</span><span class="p">,</span> <span class="n">tsd_viz</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="n">rgb_tsd_viz</span><span class="p">)</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    
+                <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">sim_cnt</span> <span class="o">%</span> <span class="n">cop_cone_skip</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rgb_save_path</span><span class="p">,</span> <span class="n">img_file</span><span class="p">),</span> <span class="n">rgb_np</span><span class="p">)</span>
+                    <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">viz_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sim_viz_</span><span class="si">{</span><span class="n">sim_cnt</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">),</span> <span class="n">rgb_tsd_viz</span><span class="p">)</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tsdiff_save_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;tsdiff_</span><span class="si">{</span><span class="n">sim_cnt</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">),</span> <span class="n">tsdiff_raw</span><span class="p">)</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gt_with_noise_save_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;noisyGT_</span><span class="si">{</span><span class="n">sim_cnt</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">),</span> <span class="n">etron_img_rod</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="c1"># sim counter</span>
+            <span class="n">sim_cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="k">def</span> <span class="nf">run_sim_singleimg</span><span class="p">(</span><span class="n">img_target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">img_ref</span><span class="o">=</span><span class="kc">None</span> <span class="p">,</span><span class="n">sensor_width</span><span class="o">=</span> <span class="mi">640</span><span class="p">,</span> <span class="n">sensor_height</span><span class="o">=</span> <span class="mi">320</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">interp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>     <span class="c1"># assum you have a png, 8bit rgb dataset</span>
+                      <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">),</span>
+                      <span class="c1"># 传感器噪声参数用于噪声增强</span>
+                      <span class="n">sensor_fixed_noise_prob</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_prob&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                      <span class="n">sensor_random_noise_prob</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_random_noise_prob&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                      <span class="n">sensor_fixed_noise_mean_ch0</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_mean_ch0&#39;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+                      <span class="n">sensor_fixed_noise_std_ch0</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_std_ch0&#39;</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="mf">128.0</span><span class="p">),</span>
+                      <span class="n">sensor_fixed_noise_mean_ch12</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_mean_ch12&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                      <span class="n">sensor_fixed_noise_std_ch12</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_fixed_noise_std_ch12&#39;</span><span class="p">,</span> <span class="mf">0.4</span> <span class="o">/</span> <span class="mf">128.0</span><span class="p">),</span>
+                      <span class="n">sensor_random_noise_std</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_random_noise_std&#39;</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">128.0</span><span class="p">),</span>
+                      <span class="n">sensor_poisson_lambda</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sensor_poisson_lambda&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                      <span class="c1"># 灰度输入扰动参数</span>
+                      <span class="n">gray_weight_jitter</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gray_weight_jitter&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                      <span class="n">gray_gain_min</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gray_gain_min&#39;</span><span class="p">,</span> <span class="mf">0.78</span><span class="p">),</span>
+                      <span class="n">gray_gain_max</span><span class="o">=</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;gray_gain_max&#39;</span><span class="p">,</span> <span class="mf">0.88</span><span class="p">),</span>
+                      <span class="c1"># 仿真参数</span>
+                      <span class="n">sim_threshold_range</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sim_threshold_range&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span>
+                      <span class="p">):</span>
+
+    <span class="c1"># 输入： h,w,c的numpy矩阵</span>
+    <span class="c1"># 输出： c,h,w的tensor 和 h，w的tensor</span>
+    <span class="c1"># 1. 采样仿真阈值</span>
+    <span class="n">sim_th</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">sim_threshold_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sim_threshold_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">sim_threshold_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">sim_threshold_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="n">sim_parama</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;threshold&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    
+    <span class="c1"># 2. 采样传感器固定噪声图</span>
+    <span class="n">fixed_noise_map</span> <span class="o">=</span> <span class="n">sample_sensor_fixed_noise</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> 
+                                                <span class="n">sensor_fixed_noise_prob</span><span class="p">,</span> 
+                                                <span class="n">sensor_fixed_noise_mean_ch0</span><span class="p">,</span> <span class="n">sensor_fixed_noise_std_ch0</span><span class="p">,</span>
+                                                <span class="n">sensor_fixed_noise_mean_ch12</span><span class="p">,</span> <span class="n">sensor_fixed_noise_std_ch12</span><span class="p">)</span>
+
+    <span class="n">sim_cnt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rod_height</span> <span class="o">=</span> <span class="n">sensor_height</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">rod_width</span> <span class="o">=</span> <span class="n">sensor_width</span> <span class="o">//</span> <span class="mi">4</span>
+    <span class="n">fpn</span> <span class="o">=</span> <span class="n">get_fpn_from_stat</span><span class="p">(</span><span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    
+    <span class="n">img_target_tensor</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">img_ref_tensor</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">img_target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">img_target</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img_target</span><span class="p">,</span> <span class="p">(</span><span class="n">sensor_width</span> <span class="p">,</span><span class="n">sensor_height</span><span class="p">))</span>
+        <span class="n">img_gray_target</span> <span class="o">=</span> <span class="n">apply_gray_jitter</span><span class="p">(</span><span class="n">img_target</span><span class="p">,</span> <span class="n">gray_weight_jitter</span><span class="p">,</span> <span class="n">gray_gain_min</span><span class="p">,</span> <span class="n">gray_gain_max</span><span class="p">)</span>
+        <span class="n">img_target</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img_gray_target</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_GRAY2BGR</span><span class="p">)</span>
+        <span class="n">img_target_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">img_target</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.0</span>
+        <span class="n">img_target_tensor</span> <span class="o">=</span> <span class="n">img_target_tensor</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">img_ref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">img_ref</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img_ref</span><span class="p">,</span> <span class="p">(</span><span class="n">sensor_width</span> <span class="p">,</span><span class="n">sensor_height</span><span class="p">))</span>
+        <span class="n">img_gray_ref</span> <span class="o">=</span> <span class="n">apply_gray_jitter</span><span class="p">(</span><span class="n">img_ref</span><span class="p">,</span> <span class="n">gray_weight_jitter</span><span class="p">,</span> <span class="n">gray_gain_min</span><span class="p">,</span> <span class="n">gray_gain_max</span><span class="p">)</span>
+        <span class="n">img_ref</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img_gray_ref</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_GRAY2BGR</span><span class="p">)</span>
+        <span class="n">img_ref_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">img_ref</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.0</span>
+        <span class="n">img_ref_tensor</span> <span class="o">=</span> <span class="n">img_ref_tensor</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Generate missing frame if needed</span>
+    <span class="k">if</span> <span class="n">img_target_tensor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">img_ref_tensor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Generate target (current) from ref (previous)</span>
+        <span class="n">random_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">random_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">random_degrees</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">img_target_tensor</span> <span class="o">=</span> <span class="n">shift_rotate_tensor</span><span class="p">(</span><span class="n">img_ref_tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">random_x</span><span class="p">,</span> <span class="n">random_y</span><span class="p">,</span> <span class="n">random_degrees</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">img_ref_tensor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">img_target_tensor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Generate ref (previous) from target (current)</span>
+        <span class="n">random_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">random_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">32</span><span class="p">,</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">random_degrees</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">img_ref_tensor</span> <span class="o">=</span> <span class="n">shift_rotate_tensor</span><span class="p">(</span><span class="n">img_target_tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">random_x</span><span class="p">,</span> <span class="n">random_y</span><span class="p">,</span> <span class="n">random_degrees</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">img_target_tensor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">img_ref_tensor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either img_target or img_ref must be provided to run_sim_singleimg&quot;</span><span class="p">)</span>
+
+    <span class="c1"># ROD采样逻辑</span>
+    <span class="n">intensity_ref</span> <span class="o">=</span> <span class="n">get_rod_img</span><span class="p">(</span><span class="n">img_ref_tensor</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">intensity_target</span> <span class="o">=</span> <span class="n">get_rod_img</span><span class="p">(</span><span class="n">img_target_tensor</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># First frame SD only (using ref-ref to make TD=0)</span>
+    <span class="n">rod_v_buf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">intensity_ref</span><span class="p">,</span> <span class="n">intensity_ref</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">sdl0</span><span class="p">,</span> <span class="n">sdr0</span> <span class="o">=</span> <span class="n">diff_response</span><span class="p">(</span><span class="n">rod_v_buf</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;td&#39;</span><span class="p">:</span> <span class="n">sim_th</span><span class="p">,</span> <span class="s1">&#39;sd&#39;</span><span class="p">:</span> <span class="n">sim_th</span><span class="p">},</span> <span class="mi">0</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">fpn</span><span class="o">=</span><span class="n">fpn</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">xy</span><span class="p">)</span>
+
+    <span class="c1"># Second frame TD+SD (using ref-target)</span>
+    <span class="n">rod_v_buf2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">intensity_ref</span><span class="p">,</span> <span class="n">intensity_target</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">td</span><span class="p">,</span> <span class="n">sdl1</span><span class="p">,</span> <span class="n">sdr1</span> <span class="o">=</span> <span class="n">diff_response</span><span class="p">(</span><span class="n">rod_v_buf2</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;td&#39;</span><span class="p">:</span> <span class="n">sim_th</span><span class="p">,</span> <span class="s1">&#39;sd&#39;</span><span class="p">:</span> <span class="n">sim_th</span><span class="p">},</span> <span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">fpn</span><span class="o">=</span><span class="n">fpn</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">xy</span><span class="p">)</span>
+
+    <span class="c1"># 传感器噪声增强 (固定噪声 + 随机噪声)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">sdl0</span><span class="p">,</span> <span class="n">sdr0</span> <span class="o">=</span> <span class="n">apply_sensor_noise</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">td</span><span class="p">),</span> <span class="n">sdl0</span><span class="p">,</span> <span class="n">sdr0</span><span class="p">,</span> <span class="n">fixed_noise_map</span><span class="p">,</span> 
+                                       <span class="n">sensor_random_noise_prob</span><span class="p">,</span> <span class="n">sensor_poisson_lambda</span><span class="p">,</span> <span class="n">sensor_random_noise_std</span><span class="p">,</span>
+                                       <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="n">td</span><span class="p">,</span> <span class="n">sdl1</span><span class="p">,</span> <span class="n">sdr1</span> <span class="o">=</span> <span class="n">apply_sensor_noise</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="n">sdl1</span><span class="p">,</span> <span class="n">sdr1</span><span class="p">,</span> <span class="n">fixed_noise_map</span><span class="p">,</span> 
+                                        <span class="n">sensor_random_noise_prob</span><span class="p">,</span> <span class="n">sensor_poisson_lambda</span><span class="p">,</span> <span class="n">sensor_random_noise_std</span><span class="p">,</span>
+                                        <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">interp</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">xy</span><span class="p">:</span>
+            <span class="c1"># First frame SD (no TD)</span>
+            <span class="n">tsdiff0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">td</span><span class="p">),</span> <span class="n">sdl0</span><span class="p">,</span> <span class="n">sdr0</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">tsdiff0_expand</span> <span class="o">=</span> <span class="n">upsample_cross_conv</span><span class="p">(</span><span class="n">tsdiff0</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">tsdiff0_full</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">tsdiff0_expand</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">),</span> 
+                                         <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">sdl0</span><span class="p">,</span> <span class="n">sdr0</span> <span class="o">=</span> <span class="n">tsdiff0_full</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">tsdiff0_full</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            
+            <span class="c1"># Second frame TD + SD</span>
+            <span class="n">tsdiff1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">td</span><span class="p">,</span> <span class="n">sdl1</span><span class="p">,</span> <span class="n">sdr1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">tsdiff1_expand</span> <span class="o">=</span> <span class="n">upsample_cross_conv</span><span class="p">(</span><span class="n">tsdiff1</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">tsdiff1_full</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">tsdiff1_expand</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">),</span> 
+                                         <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">td</span><span class="p">,</span> <span class="n">sdl1</span><span class="p">,</span> <span class="n">sdr1</span> <span class="o">=</span> <span class="n">tsdiff1_full</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tsdiff1_full</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">tsdiff1_full</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># xy=True, just directly upsample as requested</span>
+            <span class="k">def</span> <span class="nf">up_direct</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span> <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">t</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span> <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">),</span> 
+                                     <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+            <span class="c1"># td still uses upsample_cross_conv based on tianmoucData reference</span>
+            <span class="n">td_expand</span> <span class="o">=</span> <span class="n">upsample_cross_conv</span><span class="p">(</span><span class="n">td</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+            <span class="n">td</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">td_expand</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rod_height</span><span class="p">,</span> <span class="n">rod_width</span><span class="o">*</span><span class="mi">2</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">sensor_height</span><span class="p">,</span> <span class="n">sensor_width</span><span class="p">),</span> 
+                               <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+            <span class="n">sdl0</span> <span class="o">=</span> <span class="n">up_direct</span><span class="p">(</span><span class="n">sdl0</span><span class="p">)</span>
+            <span class="n">sdr0</span> <span class="o">=</span> <span class="n">up_direct</span><span class="p">(</span><span class="n">sdr0</span><span class="p">)</span>
+            <span class="n">sdl1</span> <span class="o">=</span> <span class="n">up_direct</span><span class="p">(</span><span class="n">sdl1</span><span class="p">)</span>
+            <span class="n">sdr1</span> <span class="o">=</span> <span class="n">up_direct</span><span class="p">(</span><span class="n">sdr1</span><span class="p">)</span>
+
+    <span class="n">cdim</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">sd0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">sdl0</span><span class="p">,</span> <span class="n">sdr0</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">cdim</span><span class="p">)</span>
+    <span class="n">sd1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">sdl1</span><span class="p">,</span> <span class="n">sdr1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">cdim</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">img_ref_tensor</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">img_target_tensor</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">td</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">sd0</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">sd1</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

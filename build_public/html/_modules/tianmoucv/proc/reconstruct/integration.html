@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tianmoucv.proc.reconstruct.integration &mdash; Tianmouc alpha 文档</title>
+  <title>tianmoucv.proc.reconstruct.integration &mdash; Tianmoucv alpha 文档</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
 
@@ -32,7 +32,7 @@
           
           
           <a href="../../../../index.html" class="icon icon-home">
-            Tianmouc
+            Tianmoucv
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
@@ -53,7 +53,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../../index.html">Tianmouc</a>
+          <a href="../../../../index.html">Tianmoucv</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -79,7 +79,6 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">from</span> <span class="nn">.basic</span> <span class="kn">import</span> <span class="n">laplacian_blending</span>
 <span class="kn">from</span> <span class="nn">tianmoucv.isp</span> <span class="kn">import</span> <span class="n">SD2XY</span><span class="p">,</span><span class="n">upsampleTSD</span>
 
 <div class="viewcode-block" id="TD_integration">
@@ -92,9 +91,7 @@
 <span class="sd">    </span>
 <span class="sd">    2. 计算AOP到COP的线性缩放系数</span>
 <span class="sd">    </span>
-<span class="sd">    3. laplacian_blending</span>
-<span class="sd">    </span>
-<span class="sd">    4. 双向TD积累+SD灰度合成最终结果</span>
+<span class="sd">    3. 双向TD积累+SD灰度合成最终结果</span>
 <span class="sd">    </span>
 <span class="sd">    parameter:</span>
 <span class="sd">        :param F0: [h,w,3],torch.Tensor</span>
@@ -168,7 +165,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; 版权所有 2024, THU-CBICR。</p>
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
   </div>
 
   利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 

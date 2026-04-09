@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tianmoucv.data.tianmoucData_pcie &mdash; Tianmoucv alpha 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=406e4f49"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Tianmoucv
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Outline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tianmoucv/introduction.html">TianMouCV算法库</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Tianmoucv</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">tianmoucv.data.tianmoucData_pcie</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>tianmoucv.data.tianmoucData_pcie 源代码</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">cv2</span><span class="o">,</span><span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">math</span><span class="o">,</span><span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="kn">import</span> <span class="nn">csv</span>
+
+<span class="n">flag</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;../&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">tianmoucv.rdp_pcie</span> <span class="kn">import</span> <span class="n">rod_decoder_py</span> <span class="k">as</span> <span class="n">rdc</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: no decoder found, try to compile under ./rod_decoder_py&quot;</span><span class="p">)</span>
+    <span class="n">current_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+    <span class="n">parent_folder_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">current_file_path</span><span class="p">))</span>
+    <span class="n">aim_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parent_folder_path</span><span class="p">,</span><span class="s1">&#39;rdp_pcie&#39;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">aim_path</span><span class="p">)</span>
+    <span class="n">current_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Current Path:&quot;</span><span class="p">,</span> <span class="n">current_path</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;./compile_pybind.sh&#39;</span><span class="p">])</span>
+    <span class="kn">from</span> <span class="nn">tianmoucv.rdp_pcie</span> <span class="kn">import</span> <span class="n">rod_decoder_py</span> <span class="k">as</span> <span class="n">rdc</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;compile decoder successfully&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;If you still get this message,please try:</span><span class="se">\n</span><span class="s1"> 1. run it in a python script (only once) </span><span class="se">\n</span><span class="s1"> 2. use source code install to see what happened&#39;</span><span class="p">)</span>
+  
+    
+<span class="c1">#用于色彩调整</span>
+<span class="kn">from</span> <span class="nn">tianmoucv.isp</span> <span class="kn">import</span> <span class="n">SD2XY</span><span class="p">,</span><span class="n">default_rgb_isp</span>
+<span class="kn">from</span> <span class="nn">tianmoucv.proc.reconstruct</span> <span class="kn">import</span> <span class="n">laplacian_blending</span>
+
+<span class="n">adc_bit_prec</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mi">160</span>
+<span class="n">height</span> <span class="o">=</span> <span class="mi">160</span>
+<span class="c1">#interface =</span>
+<span class="n">ROD_8B_ONE_FRM</span> <span class="o">=</span> <span class="mh">0x9e00</span>       <span class="c1">#158KB * 1024 / 4;//0x9e00</span>
+<span class="n">ROD_4B_ONE_FRM</span> <span class="o">=</span> <span class="mh">0x4D00</span> 
+<span class="n">ROD_2B_ONE_FRM</span> <span class="o">=</span> <span class="mh">0x1D00</span>
+
+<span class="n">_DEBUG</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">def</span> <span class="nf">findDataNum</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="n">data_info</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">data_info</span> <span class="o">=</span> <span class="n">data_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_stamp</span> <span class="o">=</span> <span class="n">data_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_stamp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="k">def</span> <span class="nf">findDataTimestamp</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="n">data_info</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">data_info</span> <span class="o">=</span> <span class="n">data_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_stamp</span> <span class="o">=</span> <span class="n">data_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_stamp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+<span class="k">def</span> <span class="nf">getCorrectRodSize</span><span class="p">(</span><span class="n">nbit</span><span class="p">,</span><span class="n">nfile</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">nbit</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ROD_2B_ONE_FRM</span><span class="o">*</span><span class="n">nfile</span> <span class="o">*</span> <span class="mi">4</span> 
+    <span class="k">if</span> <span class="n">nbit</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ROD_4B_ONE_FRM</span><span class="o">*</span><span class="n">nfile</span> <span class="o">*</span> <span class="mi">4</span>  
+    <span class="k">if</span> <span class="n">nbit</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ROD_8B_ONE_FRM</span><span class="o">*</span><span class="n">nfile</span> <span class="o">*</span> <span class="mi">4</span> 
+    
+
+<div class="viewcode-block" id="TianmoucDataReader_pcie">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData_pcie.TianmoucDataReader_pcie">[文档]</a>
+<span class="k">class</span> <span class="nc">TianmoucDataReader_pcie</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        - pathList:一个装有多个数据集的list，用以合并数据集，如果只有一个可以输入;</span>
+<span class="sd">            格式:[数据集路径1,数据集路径2,...]</span>
+<span class="sd">        - showList:打印出来看看有哪些数据</span>
+<span class="sd">        - MAXLEN:接受多少个输入作为训练数据</span>
+<span class="sd">        - matchkey:是否匹配某个具体样本名，无输入则使用所有数据</span>
+<span class="sd">        - savedFileDict:提前存储的数据目录</span>
+<span class="sd">        - ifSaveFileDict:是否存下所有数据目录</span>
+<span class="sd">        - speedUpRate:数据加速压缩比例</span>
+
+<span class="sd">        输出数据是F0,F1，以及25*speedUpRate 帧ROD 连续</span>
+<span class="sd">        </span>
+<span class="sd">    **注意**</span>
+<span class="sd">    </span>
+<span class="sd">        PCIE版本数据需要预先输入相机模式</span>
+<span class="sd">        @parameter rod_adc_bit= 2,4,8 为AOP的工作模式</span>
+<span class="sd">        @cameraMode cameraMode = 0,1 分为parallel(0) or lvds(1)</span>
+<span class="sd">    </span>
+<span class="sd">    逻辑:</span>
+<span class="sd">    </span>
+<span class="sd">        1. 对每个rod，找到向下最接近的cone</span>
+<span class="sd">        2. 对这个cone，存向上的所囊括的rod的索引</span>
+<span class="sd">        3. 读取数据的时候，可以选择度哪个rod以及其对应的cone，也可以用另一个逻辑</span>
+<span class="sd">        4. 索引文件可以保存下来，只要key存在就不用再算一遍</span>
+<span class="sd">        5. 抽帧逻辑，合并N个sample，保留所有的TDSD，去掉中间的COP帧</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">pathList</span><span class="p">,</span><span class="n">showList</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">rod_adc_bit</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                 <span class="n">cameraMode</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1">#parallel(0) or lvds(1)</span>
+                 <span class="n">MAXLEN</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">matchkey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">savedFileDict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">ifSaveFileDict</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                 <span class="n">speedUpRate</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">ifUniformSampling</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+
+        <span class="n">modedict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;para&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="s1">&#39;lvds&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;CAMERA MODE SET: </span><span class="se">\n</span><span class="s1"> (1)rod_adc_bit =&#39;</span><span class="p">,</span><span class="n">rod_adc_bit</span><span class="p">,</span>
+                  <span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> (2)cameraMode  =&#39;</span><span class="p">,</span><span class="n">modedict</span><span class="p">[</span><span class="n">cameraMode</span><span class="p">],</span>
+                  <span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> (3)matchkey    =&#39;</span><span class="p">,</span><span class="n">matchkey</span><span class="p">)</span>
+        
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span> <span class="o">=</span> <span class="mi">160</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span> <span class="o">=</span> <span class="mi">160</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">showList</span> <span class="o">=</span> <span class="n">showList</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cone_height</span> <span class="o">=</span> <span class="mi">320</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cone_width</span> <span class="o">=</span> <span class="mi">320</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rod_adc_bit</span> <span class="o">=</span> <span class="n">rod_adc_bit</span>
+        
+        <span class="k">if</span> <span class="n">rod_adc_bit</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">cameraMode</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span> <span class="o">=</span> <span class="mi">25</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span> <span class="o">=</span> <span class="mi">131</span>
+        <span class="k">if</span> <span class="n">rod_adc_bit</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">cameraMode</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="mi">3</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span> <span class="o">=</span> <span class="mi">50</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span> <span class="o">=</span> <span class="mi">65</span>           
+        <span class="k">if</span> <span class="n">rod_adc_bit</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="n">cameraMode</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span> <span class="o">=</span> <span class="mi">50</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span> <span class="o">=</span> <span class="mi">65</span>    
+        <span class="k">if</span> <span class="n">rod_adc_bit</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="n">cameraMode</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="mi">4</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span> <span class="o">=</span> <span class="mi">100</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span> <span class="o">=</span> <span class="mi">33</span>    
+        <span class="k">if</span> <span class="n">rod_adc_bit</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">cameraMode</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="mi">3</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span> <span class="o">=</span> <span class="mi">110</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span> <span class="o">=</span> <span class="mi">33</span>    
+        <span class="k">if</span> <span class="n">rod_adc_bit</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">cameraMode</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="mi">8</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span> <span class="o">=</span> <span class="mi">330</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span> <span class="o">=</span> <span class="mi">10</span>     
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">coneInterval</span> <span class="o">=</span> <span class="mi">3333</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rodFileSize</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampleNumDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampleNum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rod_adc_bit</span> <span class="o">=</span> <span class="n">rod_adc_bit</span>
+        
+        <span class="c1">#&#39;/filedict.npy&#39;</span>
+        <span class="k">if</span> <span class="n">savedFileDict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">savedFileDict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">matchkey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datalist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">savedFileDict</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span> <span class="o">=</span> <span class="n">datalist</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---&gt;data loader: succesfully read saved file list:&quot;</span><span class="p">,</span><span class="n">savedFileDict</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileList</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">DataTop</span> <span class="ow">in</span> <span class="n">pathList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">addMoreSample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">,</span><span class="n">DataTop</span><span class="p">,</span><span class="n">matchkey</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ifSaveFileDict</span><span class="p">:</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">savedFileDict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">extraction</span><span class="p">(</span><span class="n">speedUpRate</span><span class="p">,</span><span class="n">MAXLEN</span><span class="p">,</span><span class="n">ifUniformSampling</span><span class="p">)</span>
+            
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sampleNumDict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">dataNum</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sampleNum</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataNum</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="s1">&#39;---legal sample num:&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dataNum</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+            
+    <span class="c1">#input:</span>
+    <span class="c1">#   @fileDict：</span>
+    <span class="c1">#    --- key [sample name]</span>
+    <span class="c1">#         sample name : sampleName+&#39;@&#39;+sampleGroup</span>
+    <span class="c1">#         --- &#39;rod&#39; : a list of sorted rod file name</span>
+    <span class="c1">#         --- &#39;cone&#39;: a list of sorted cone file name</span>
+    <span class="c1">#         --- &#39;legalData&#39;: a list of legal data meta information</span>
+    <span class="c1">#output:</span>
+    <span class="c1">#  @fileDict</span>
+    <span class="c1">#     update this dict</span>
+    <span class="k">def</span> <span class="nf">addMoreSample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fileDict</span><span class="p">,</span><span class="n">dataset_top</span><span class="p">,</span><span class="n">matchkey</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">,</span><span class="s1">&#39;rod sample per file&#39;</span><span class="p">)</span>
+        <span class="n">signals</span><span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rod&#39;</span><span class="p">,</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span>
+        <span class="n">ext</span><span class="o">=</span><span class="s2">&quot;.bin&quot;</span>
+        <span class="c1"># find all legal sample list</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">dataset_top</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">dataset_top</span><span class="p">,</span> <span class="s1">&#39;is not a directory&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fileDict</span>
+        <span class="k">for</span> <span class="n">folderlist</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">dataset_top</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">matchkey</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">folderlist</span><span class="o">!=</span><span class="n">matchkey</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">firstSave</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">folder_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset_top</span><span class="p">,</span> <span class="n">folderlist</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">sg</span> <span class="ow">in</span> <span class="n">signals</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">fileList</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">dataListRoot</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_root</span><span class="p">,</span> <span class="n">sg</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">fl</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">dataListRoot</span><span class="p">):</span>
+                        <span class="n">flpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataListRoot</span><span class="p">,</span> <span class="n">fl</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">flpath</span><span class="p">)</span> <span class="ow">and</span> <span class="n">flpath</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span><span class="o">==</span><span class="n">ext</span><span class="p">):</span>
+                            <span class="n">fileList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flpath</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fileList</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">firstSave</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                            <span class="n">fileDict</span><span class="p">[</span><span class="n">folderlist</span><span class="o">+</span><span class="s1">&#39;@&#39;</span><span class="o">+</span><span class="n">dataset_top</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                            <span class="n">fileDict</span><span class="p">[</span><span class="n">folderlist</span><span class="o">+</span><span class="s1">&#39;@&#39;</span><span class="o">+</span><span class="n">dataset_top</span><span class="p">][</span><span class="n">sg</span><span class="p">]</span> <span class="o">=</span> <span class="n">fileList</span>
+                            <span class="n">firstSave</span> <span class="o">=</span> <span class="kc">False</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">fileDict</span><span class="p">[</span><span class="n">folderlist</span><span class="o">+</span><span class="s1">&#39;@&#39;</span><span class="o">+</span><span class="n">dataset_top</span><span class="p">][</span><span class="n">sg</span><span class="p">]</span> <span class="o">=</span> <span class="n">fileList</span>
+                    <span class="k">elif</span> <span class="n">folderlist</span> <span class="ow">in</span> <span class="n">fileDict</span><span class="p">:</span>
+                        <span class="n">fileDict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">folderlist</span><span class="p">)</span>
+                        <span class="k">break</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;bad entry for &#39;</span><span class="p">,</span><span class="n">sg</span><span class="p">,</span><span class="s1">&#39; in &#39;</span><span class="p">,</span><span class="n">folder_root</span><span class="p">)</span>
+        
+        <span class="c1"># save all legal samples</span>
+        <span class="n">keylist</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">fileDict</span><span class="p">]</span>
+        <span class="c1"># sort the aop and cop sample in terms of the time stamp</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keylist</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">sg</span> <span class="ow">in</span> <span class="n">signals</span><span class="p">:</span>
+                <span class="n">list2</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">sg</span><span class="p">],</span><span class="n">key</span><span class="o">=</span><span class="n">findDataNum</span><span class="p">)</span>
+                <span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">sg</span><span class="p">]</span> <span class="o">=</span> <span class="n">list2</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keylist</span><span class="p">:</span>
+            
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">labelFileName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;@&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;@&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;label.csv&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">labelFileName</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">labelFileName</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="c1"># 读取CSV文件内容</span>
+                    <span class="n">csv_reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv_reader</span><span class="p">:</span>
+                        <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                        <span class="c1">#print(labels,row)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;labelFileName:&#39;</span><span class="p">,</span><span class="n">labelFileName</span><span class="p">,</span><span class="s1">&#39;doesnot have status label&#39;</span><span class="p">)</span>
+                                
+            <span class="n">legalFileList</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="c1"># delete all decrepted sample</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rodListSorted</span> <span class="o">=</span> <span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;rod&#39;</span><span class="p">]</span>
+                <span class="n">coneListSorted</span> <span class="o">=</span> <span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">fileDict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;key:&#39;</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="s1">&#39; has some problems, popped&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+                
+            <span class="c1"># (0) Check self.rodfilepersample, 检查文件是否出错</span>
+            <span class="n">MINTIMEINTERVAL</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">:</span>
+                <span class="n">rt1</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">[</span><span class="mi">20</span><span class="p">])</span>
+                <span class="n">rt0</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+                <span class="n">MINTIMEINTERVAL</span> <span class="o">=</span> <span class="p">(</span><span class="n">rt1</span><span class="o">-</span><span class="n">rt0</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">10</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span><span class="o">-</span><span class="n">MINTIMEINTERVAL</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">5</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;**WARNING** Your file may be damaged:&#39;</span><span class="p">,</span><span class="n">MINTIMEINTERVAL</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">rt1</span><span class="o">-</span><span class="n">rt0</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">10</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span><span class="p">))</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">rodFileSize</span> <span class="o">=</span> <span class="n">getCorrectRodSize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_adc_bit</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodFileSize</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">[</span><span class="mi">20</span><span class="p">])</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;**WARNING** Your file may be damaged: correct size:&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rodFileSize</span><span class="p">,</span>\
+                          <span class="s1">&#39; rod size:&#39;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">[</span><span class="mi">20</span><span class="p">]))</span>
+                
+            <span class="k">if</span> <span class="n">_DEBUG</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;MINTIMEINTERVAL:&#39;</span><span class="p">,</span><span class="n">MINTIMEINTERVAL</span><span class="p">,</span><span class="s1">&#39; self.rodfilepersample:&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">)</span>
+            <span class="n">rodSearchStart</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">coneID</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">coneListSorted</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="c1"># create a new legal sample</span>
+                <span class="n">legalSample</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+                <span class="n">rodtimestamp1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">500</span>
+                <span class="n">rodtimestamp2</span> <span class="o">=</span> <span class="o">-</span><span class="mi">500</span>
+                <span class="n">rodRange</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">conetimestamp1</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">coneListSorted</span><span class="p">[</span><span class="n">coneID</span><span class="p">])</span>
+                <span class="n">conetimestamp2</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">coneListSorted</span><span class="p">[</span><span class="n">coneID</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">coneInterval</span> <span class="o">=</span> <span class="n">conetimestamp2</span><span class="o">-</span><span class="n">conetimestamp1</span>
+                <span class="k">if</span> <span class="n">_DEBUG</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">coneInterval</span><span class="p">)</span><span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">coneInterval</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;CONE INTERVL:&#39;</span><span class="p">,</span><span class="n">conetimestamp2</span><span class="o">-</span><span class="n">conetimestamp1</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="n">coneListSorted</span><span class="p">[</span><span class="n">coneID</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">coneID</span><span class="o">+</span><span class="mi">2</span><span class="p">])</span>
+                <span class="c1"># (1)find the first rod sample and gurantee the  time(r)+n*dt &gt; time(c)&gt; time(r)</span>
+                <span class="k">for</span> <span class="n">rodID</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rodSearchStart</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">)):</span>
+                    <span class="n">rodtimestamp1</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">[</span><span class="n">rodID</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">rodtimestamp1</span> <span class="o">+</span> <span class="n">MINTIMEINTERVAL</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">&lt;=</span> <span class="n">conetimestamp1</span> <span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">deltaT</span> <span class="o">=</span> <span class="n">conetimestamp1</span> <span class="o">-</span> <span class="n">rodtimestamp1</span>
+                        <span class="k">if</span> <span class="n">deltaT</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">MINTIMEINTERVAL</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">:</span>
+                            <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                            <span class="k">if</span> <span class="n">_DEBUG</span> <span class="ow">and</span> <span class="n">rodID</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR:RODID[0] is too big&#39;</span><span class="p">)</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;cid:&#39;</span><span class="p">,</span><span class="n">coneID</span><span class="p">,</span><span class="s1">&#39;ct:&#39;</span><span class="p">,</span><span class="n">conetimestamp1</span><span class="p">)</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;rid:&#39;</span><span class="p">,</span><span class="n">rodID</span><span class="p">,</span><span class="s1">&#39;rt:&#39;</span><span class="p">,</span><span class="n">rodtimestamp1</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">bias</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">deltaT</span><span class="o">/</span><span class="n">MINTIMEINTERVAL</span><span class="p">)</span>
+                            <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">rodID</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">+</span> <span class="n">bias</span>
+                        <span class="k">break</span>
+                <span class="c1"># (2)find the last rod sample</span>
+                <span class="n">rodSearchStart</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">//</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">coneInterval</span><span class="o">&gt;</span><span class="bp">self</span><span class="o">.</span><span class="n">coneInterval</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">rodID</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rodSearchStart</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">)):</span>
+                    <span class="n">rodtimestamp2</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">rodListSorted</span><span class="p">[</span><span class="n">rodID</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">rodtimestamp2</span><span class="o">+</span> <span class="n">MINTIMEINTERVAL</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="o">&lt;</span><span class="n">conetimestamp2</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">deltaT</span> <span class="o">=</span> <span class="n">conetimestamp2</span> <span class="o">-</span> <span class="n">rodtimestamp2</span>
+                        <span class="k">if</span> <span class="n">deltaT</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">MINTIMEINTERVAL</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">:</span>
+                            <span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                            <span class="k">if</span> <span class="n">_DEBUG</span> <span class="ow">and</span> <span class="n">rodID</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;step2,ERROR:RODID[1] is too big&#39;</span><span class="p">)</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;step2,cid:&#39;</span><span class="p">,</span><span class="n">coneID</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;ct:&#39;</span><span class="p">,</span><span class="n">conetimestamp2</span><span class="p">)</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;step2,rid:&#39;</span><span class="p">,</span><span class="n">rodID</span><span class="p">,</span><span class="s1">&#39;rt:&#39;</span><span class="p">,</span><span class="n">rodtimestamp2</span><span class="p">)</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;step2,deltaT:&#39;</span><span class="p">,</span><span class="n">deltaT</span><span class="p">,</span><span class="s1">&#39;deltaT/MINTIMEINTERVAL:&#39;</span><span class="p">,</span><span class="n">deltaT</span><span class="o">/</span><span class="n">MINTIMEINTERVAL</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1">#check which file is it in</span>
+                            <span class="n">bias</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">deltaT</span><span class="o">/</span><span class="n">MINTIMEINTERVAL</span><span class="p">)</span>
+                            <span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">rodID</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span> <span class="o">+</span> <span class="n">bias</span>
+                        <span class="k">break</span>
+                <span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">rodSearchStart</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">//</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                <span class="c1">#(3)final check and add them to the training list</span>
+                <span class="k">if</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">aopcoprate</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;TOO FEW FILE&#39;</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;cid:&#39;</span><span class="p">,</span><span class="n">coneID</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;ct:&#39;</span><span class="p">,</span><span class="n">conetimestamp2</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;rid:&#39;</span><span class="p">,</span><span class="n">rodID</span><span class="p">,</span><span class="s1">&#39;rt:&#39;</span><span class="p">,</span><span class="n">rodtimestamp2</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;rodRange[1] - rodRange[0]:&#39;</span><span class="p">,</span><span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;deltaT:&#39;</span><span class="p">,</span><span class="n">deltaT</span><span class="p">,</span><span class="s1">&#39;deltaT/MINTIMEINTERVAL:&#39;</span><span class="p">,</span><span class="n">deltaT</span><span class="o">/</span><span class="n">MINTIMEINTERVAL</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coneID</span><span class="p">,</span><span class="n">coneID</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;rod&#39;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">rodRange</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">&#39;HDR&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;HS&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">],</span> 
+                                             <span class="p">[</span><span class="s1">&#39;Blur&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;Noisy&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">]]</span>
+<span class="w">                </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                legalSample[&#39;meta&#39;] = {&#39;key&#39;:key,</span>
+<span class="sd">                                       &#39;C0&#39;:coneListSorted[coneID],</span>
+<span class="sd">                                       &#39;C1&#39;:coneListSorted[coneID+1],</span>
+<span class="sd">                                       &#39;R0&#39;:rodListSorted[rodRange[0]//self.rodfilepersample],</span>
+<span class="sd">                                       &#39;R0_bias:&#39;:rodRange[0]%self.rodfilepersample,</span>
+<span class="sd">                                       &#39;R1&#39;:rodListSorted[rodRange[0]//self.rodfilepersample],</span>
+<span class="sd">                                       &#39;R1_bias:&#39;:rodRange[0]%self.rodfilepersample,</span>
+<span class="sd">                                       &#39;C_time&#39;: (conetimestamp1,conetimestamp2),</span>
+<span class="sd">                                       &#39;R_time&#39;: (rodtimestamp1,rodtimestamp2),</span>
+<span class="sd">                                       &#39;C/R&#39;:self.aopcoprate,</span>
+<span class="sd">                                       &#39;RpF&#39;:self.rodfilepersample}</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="n">legalFileList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">legalSample</span><span class="p">)</span>
+                <span class="c1">#print(legalSample)</span>
+            <span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">legalFileList</span>
+            <span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;RpF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span>
+
+        <span class="k">return</span> <span class="n">fileDict</span>  
+              
+    <span class="k">def</span> <span class="nf">extraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">rate</span><span class="p">,</span><span class="n">MAXLEN</span><span class="p">,</span><span class="n">ifUniformSampling</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="n">newLegalFileList</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">sample_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">rdpersample</span> <span class="o">=</span> <span class="n">sample_i</span><span class="p">[</span><span class="s1">&#39;RpF&#39;</span><span class="p">]</span>
+            <span class="n">legalFileList</span> <span class="o">=</span> <span class="n">sample_i</span><span class="p">[</span><span class="s1">&#39;legalData&#39;</span><span class="p">]</span>
+            <span class="c1">#叠加放缩</span>
+            <span class="n">scaledLength</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">legalFileList</span><span class="p">)</span><span class="o">//</span><span class="n">rate</span>
+            <span class="c1">#分散取样</span>
+            <span class="n">gap</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">MAXLEN</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">scaledLength</span> <span class="o">&gt;</span> <span class="n">MAXLEN</span> <span class="ow">and</span> <span class="n">ifUniformSampling</span><span class="p">:</span>
+                <span class="n">gap</span> <span class="o">=</span> <span class="n">scaledLength</span><span class="o">//</span><span class="n">MAXLEN</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">scaledLength</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">gap</span><span class="p">):</span>
+                <span class="n">legalSample</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+                <span class="n">coneidrange1</span> <span class="o">=</span> <span class="n">legalFileList</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">rate</span><span class="p">][</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span> 
+                <span class="n">coneidrange2</span> <span class="o">=</span> <span class="n">legalFileList</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">rate</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span> 
+                <span class="n">rodidrange1</span> <span class="o">=</span> <span class="n">legalFileList</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">rate</span><span class="p">][</span><span class="s1">&#39;rod&#39;</span><span class="p">]</span>
+                <span class="n">rodidrange2</span> <span class="o">=</span> <span class="n">legalFileList</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">rate</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;rod&#39;</span><span class="p">]</span>
+                <span class="n">c0</span> <span class="o">=</span> <span class="n">coneidrange1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">c1</span> <span class="o">=</span> <span class="n">coneidrange2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">r0</span> <span class="o">=</span> <span class="n">rodidrange1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">r1</span> <span class="o">=</span> <span class="n">rodidrange2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">c1</span><span class="o">-</span><span class="n">c0</span> <span class="o">==</span> <span class="n">rate</span><span class="p">:</span>
+                    <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c0</span><span class="p">,</span><span class="n">c1</span><span class="p">)</span>
+                    <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;rod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">r0</span><span class="p">,</span><span class="n">r1</span><span class="p">)</span>
+                    <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">legalFileList</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">rate</span><span class="p">][</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>
+                    <span class="n">newLegalFileList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">legalSample</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">MAXLEN</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">newLegalFileList</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAXLEN</span><span class="p">:</span>
+                        <span class="k">break</span>
+            <span class="n">sample_i</span><span class="p">[</span><span class="s1">&#39;legalData&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">newLegalFileList</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_i</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="s1">&#39;origin length:&#39;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">legalFileList</span><span class="p">),</span>
+                      <span class="s1">&#39; legal length:&#39;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">newLegalFileList</span><span class="p">))</span>
+
+        
+    <span class="k">def</span> <span class="nf">dataNum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">])</span>
+        
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampleNum</span> 
+    
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_str</span> <span class="o">=</span> <span class="s1">&#39;Dataset &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampleNumDict</span><span class="p">:</span>
+            <span class="n">fmt_str</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s1">&#39; sample cell num:&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampleNumDict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">fmt_str</span>
+
+    
+    <span class="c1"># read a rod file directly</span>
+    <span class="k">def</span> <span class="nf">readRodFast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">rod_id</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">rod_id</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;rod&#39;</span><span class="p">])</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;invalid coneid for &#39;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;rod&#39;</span><span class="p">]),</span><span class="s1">&#39; rod data&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span>
+        
+        <span class="n">rodFileID</span> <span class="o">=</span> <span class="n">rod_id</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;rod&#39;</span><span class="p">][</span><span class="n">rodFileID</span><span class="p">]</span>
+        <span class="n">rodtimeStamp</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">bytesize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodFileSize</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">bytesize</span> <span class="o">//</span> <span class="mi">4</span>
+        <span class="n">temp_diff_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+        <span class="n">spat_diff_left_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+        <span class="n">spat_diff_right_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+        <span class="n">pkt_size_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">pkt_size_td</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">pkt_size_sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">one_frm_size</span> <span class="o">=</span> <span class="n">size</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span>
+        <span class="n">ret_code</span> <span class="o">=</span> <span class="n">rdc</span><span class="o">.</span><span class="n">rod_decoder_py_byfile_td_sd_bw</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">one_frm_size</span><span class="p">,</span>
+                                                <span class="n">temp_diff_np</span><span class="p">,</span> <span class="n">spat_diff_left_np</span><span class="p">,</span> <span class="n">spat_diff_right_np</span><span class="p">,</span>
+                                                <span class="n">pkt_size_np</span><span class="p">,</span><span class="n">pkt_size_td</span><span class="p">,</span><span class="n">pkt_size_sd</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span><span class="p">)</span>
+        <span class="n">sd_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">td_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">):</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span>
+            <span class="n">temp_diff_np1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">temp_diff_np</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">))</span>
+            <span class="n">spat_diff_left_np1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">spat_diff_left_np</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">))</span>
+            <span class="n">spat_diff_right_np1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">spat_diff_right_np</span><span class="p">[</span><span class="n">b</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">))</span>
+            <span class="n">sdl</span> <span class="o">=</span> <span class="n">spat_diff_left_np1</span>
+            <span class="n">sdr</span> <span class="o">=</span> <span class="n">spat_diff_right_np1</span>
+            <span class="n">td</span> <span class="o">=</span> <span class="n">temp_diff_np1</span>
+            <span class="n">sd_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sdl</span><span class="p">,</span> <span class="n">sdr</span><span class="p">))</span>
+            <span class="n">td_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">td</span><span class="p">)</span>
+            
+        <span class="n">rodtimeStamp</span> <span class="o">+=</span> <span class="p">(</span><span class="n">rod_id</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">)</span><span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodInterval</span>
+        <span class="k">return</span> <span class="n">sd_list</span><span class="p">[</span><span class="n">rod_id</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">],</span><span class="n">td_list</span><span class="p">[</span><span class="n">rod_id</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">],</span><span class="n">rodtimeStamp</span><span class="p">,</span><span class="n">filename</span>
+          
+    <span class="c1"># read a cone file directly</span>
+    <span class="k">def</span> <span class="nf">readConeFast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">cone_id</span><span class="p">,</span><span class="n">viz</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">useISP</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">ifSync</span> <span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cone_id</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;cone&#39;</span><span class="p">]):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;invalid coneid for &#39;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;cone&#39;</span><span class="p">]),</span><span class="s1">&#39; cone data&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span>
+        <span class="n">conefilename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;cone&#39;</span><span class="p">][</span><span class="n">cone_id</span><span class="p">]</span>
+        <span class="n">conetimeStamp</span> <span class="o">=</span> <span class="n">findDataTimestamp</span><span class="p">(</span><span class="n">conefilename</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">conefilename</span><span class="p">)</span>
+        <span class="c1">#wihei = int(np.sqrt((size - 64) // 4))</span>
+        <span class="n">raw_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cone_height</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cone_width</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+        <span class="n">rdc</span><span class="o">.</span><span class="n">cone_reader_py_byfile</span><span class="p">(</span><span class="n">conefilename</span><span class="p">,</span> <span class="n">size</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span> <span class="n">raw_vec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cone_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cone_width</span><span class="p">)</span>
+        <span class="n">cone_raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">raw_vec</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cone_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cone_width</span><span class="p">))</span>
+        <span class="n">start_frame</span> <span class="o">=</span> <span class="n">cone_raw</span>
+        <span class="c1">#rgb_processed = start_frame</span>
+        <span class="k">return</span> <span class="n">start_frame</span><span class="p">,</span> <span class="n">conetimeStamp</span><span class="p">,</span> <span class="n">conefilename</span>
+
+    <span class="k">def</span> <span class="nf">packRead</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">idx</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">ifSync</span> <span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">needPreProcess</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+        <span class="n">legalSample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">coneRange</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;cone&#39;</span><span class="p">]</span>
+        <span class="n">rodRange</span>  <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;rod&#39;</span><span class="p">]</span>
+        <span class="n">metaInfo</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+        
+        <span class="n">start_frame</span><span class="p">,</span><span class="n">coneTimeStamp1</span><span class="p">,</span><span class="n">conefilename1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readConeFast</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">coneRange</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">end_frame</span><span class="p">,</span><span class="n">coneTimeStamp2</span><span class="p">,</span><span class="n">conefilename2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readConeFast</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">coneRange</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;C_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">conefilename1</span><span class="p">,</span><span class="n">conefilename2</span><span class="p">)</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;C_timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">coneTimeStamp1</span><span class="p">,</span><span class="n">coneTimeStamp2</span><span class="p">)</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_bias&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;sample_length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">])</span>
+
+        <span class="n">itter</span> <span class="o">=</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">itter</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">coneStartId</span><span class="p">,</span> <span class="n">cone_id</span><span class="p">,</span> <span class="n">coneRange</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">itter</span> <span class="p">,</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">,</span> <span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">tsd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="n">itter</span><span class="p">,</span><span class="mi">160</span><span class="p">,</span><span class="mi">160</span><span class="p">])</span>
+        <span class="n">SD_0</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">SD_1</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">itter</span><span class="p">):</span>
+            <span class="n">sd</span><span class="p">,</span><span class="n">td</span><span class="p">,</span><span class="n">rodTimeStamp</span><span class="p">,</span><span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readRodFast</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+            <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rodTimeStamp</span><span class="p">)</span>
+            <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_bias&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rodRange</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">rodfilepersample</span><span class="p">)</span>
+            <span class="n">sdl</span><span class="p">,</span><span class="n">sdr</span> <span class="o">=</span> <span class="n">sd</span>
+            <span class="n">tsd</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">td</span><span class="p">)</span>
+            <span class="n">tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">sdl</span><span class="p">)</span>
+            <span class="n">tsd</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">sdr</span><span class="p">)</span>
+            <span class="n">SD</span> <span class="o">=</span> <span class="n">tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span><span class="n">i</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">SD_0</span> <span class="o">=</span> <span class="n">tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span><span class="n">i</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">itter</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">SD_1</span> <span class="o">=</span> <span class="n">tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span><span class="n">i</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+            
+        <span class="k">if</span> <span class="n">needPreProcess</span><span class="p">:</span>
+            <span class="n">start_frame</span><span class="p">,</span><span class="n">end_frame</span><span class="p">,</span><span class="n">F0_without_isp</span><span class="p">,</span><span class="n">F1_without_isp</span><span class="p">,</span><span class="n">tsdiff_inter</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">start_frame</span><span class="p">,</span><span class="n">end_frame</span><span class="p">,</span><span class="n">tsd</span><span class="p">)</span>
+            <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;tsdiff_160x320&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsdiff_inter</span>
+            <span class="n">tsdiff_resized</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">tsdiff_inter</span><span class="p">,(</span><span class="mi">320</span><span class="p">,</span><span class="mi">640</span><span class="p">),</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">)</span>
+            <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;tsdiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsdiff_resized</span>
+            <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F0_without_isp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">F0_without_isp</span>
+            <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F1_without_isp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">F1_without_isp</span>
+            <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F0_HDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">HDRRecon</span><span class="p">(</span><span class="n">SD_0</span><span class="o">/</span><span class="mf">128.0</span><span class="p">,</span><span class="n">start_frame</span><span class="p">)</span>
+            <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F1_HDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">HDRRecon</span><span class="p">(</span><span class="n">SD_1</span><span class="o">/</span><span class="mf">128.0</span><span class="p">,</span><span class="n">end_frame</span><span class="p">)</span>
+    
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_frame</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">end_frame</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;rawDiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsd</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metaInfo</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">sample</span>
+    
+    <span class="k">def</span> <span class="nf">HDRRecon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">SD</span><span class="p">,</span><span class="n">F0</span><span class="p">):</span>
+        <span class="n">F0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">F0</span><span class="p">)</span>
+        <span class="n">Ix</span><span class="p">,</span><span class="n">Iy</span><span class="o">=</span> <span class="n">SD2XY</span><span class="p">(</span><span class="n">SD</span><span class="p">)</span>
+        <span class="n">Ix</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">Ix</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">320</span><span class="p">,</span><span class="mi">640</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">Iy</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">Iy</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">320</span><span class="p">,</span><span class="mi">640</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">blend_hdr</span> <span class="o">=</span> <span class="n">laplacian_blending</span><span class="p">(</span><span class="o">-</span><span class="n">Ix</span><span class="p">,</span><span class="o">-</span><span class="n">Iy</span><span class="p">,</span> <span class="n">srcimg</span><span class="o">=</span><span class="n">F0</span><span class="p">,</span><span class="n">iteration</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">mask_rgb</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">blend_hdr</span>
+        
+    <span class="k">def</span> <span class="nf">locateSample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="n">relativeIndex</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampleNumDict</span><span class="p">:</span>
+            <span class="n">numKey</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampleNumDict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">relativeIndex</span> <span class="o">&gt;=</span> <span class="n">numKey</span><span class="p">:</span>
+                <span class="n">relativeIndex</span> <span class="o">-=</span> <span class="n">numKey</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">key</span><span class="p">,</span><span class="n">relativeIndex</span>
+        <span class="k">return</span> <span class="n">key</span><span class="p">,</span><span class="n">relativeIndex</span>
+
+    
+    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">F0_raw</span><span class="p">,</span><span class="n">F1_raw</span><span class="p">,</span><span class="n">tsdiff</span><span class="p">):</span>
+        
+        <span class="n">F0</span><span class="p">,</span><span class="n">F0_without_isp</span> <span class="o">=</span> <span class="n">default_rgb_isp</span><span class="p">(</span><span class="n">F0_raw</span><span class="p">)</span>
+        <span class="n">F1</span><span class="p">,</span><span class="n">F1_without_isp</span> <span class="o">=</span> <span class="n">default_rgb_isp</span><span class="p">(</span><span class="n">F1_raw</span><span class="p">)</span>
+        <span class="n">tsdiff_inter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsampleTSD_conv</span><span class="p">(</span><span class="n">tsdiff</span><span class="p">)</span><span class="o">/</span><span class="mf">128.0</span>
+        
+        <span class="k">return</span> <span class="n">F0</span><span class="p">,</span><span class="n">F1</span><span class="p">,</span><span class="n">F0_without_isp</span><span class="p">,</span><span class="n">F1_without_isp</span><span class="p">,</span><span class="n">tsdiff_inter</span>
+    
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="c1">#定位在哪个sample里</span>
+        <span class="n">key</span><span class="p">,</span><span class="n">relativeIndex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locateSample</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">packRead</span><span class="p">(</span><span class="n">relativeIndex</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sample</span>
+    
+    <span class="k">def</span> <span class="nf">upsampleTSD_conv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">tsdiff</span><span class="p">):</span>
+        <span class="c1"># 获取输入Tensor的维度信息</span>
+        <span class="n">h</span><span class="p">,</span><span class="n">w</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">w</span> <span class="o">*=</span> <span class="mi">2</span>
+        <span class="n">tsdiff_expand</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="o">*</span><span class="n">tsdiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span><span class="n">h</span><span class="p">,</span><span class="n">w</span><span class="p">])</span>
+        <span class="n">tsdiff_expand</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="mi">2</span><span class="p">,::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="mi">2</span><span class="p">,:]</span>
+        <span class="n">tsdiff_expand</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,:]</span>
+        <span class="n">channels</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">tsdiff_expand</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">tsdiff_expand</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="o">*</span><span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># 定义卷积核</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+        <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+        <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+        <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+        <span class="c1"># 对输入Tensor进行反射padding</span>
+        <span class="n">padded_tensor</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;reflect&#39;</span><span class="p">)</span>
+        <span class="c1"># 将原tensor复制一份用于填充结果</span>
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="c1"># 将卷积结果填充回原tensor</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">channels</span><span class="o">*</span><span class="n">T</span><span class="p">):</span>
+            <span class="c1">#print(padded_tensor[0,:8,:8])</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">padded_tensor</span><span class="p">[:,</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">],</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1">#print(output[0,:8,:8])</span>
+            <span class="n">output_tensor</span><span class="p">[:,</span> <span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">output_tensor</span><span class="p">[:,</span> <span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="c1">#print(output_tensor[0,:8,:8])</span>
+        <span class="k">return</span> <span class="n">output_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

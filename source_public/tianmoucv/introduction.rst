@@ -1,272 +1,227 @@
-TianMouCV算法库
+TianMouCV 算法库
 ===============
 
-这里是代码库的简要介绍和概述。
+TianMouCV 是一个专门为 Tianmouc 传感器（混合事件-帧传感器）设计的高性能计算机视觉库。它结合了传统基于帧（Frame-based）的视觉算法和新兴的基于事件（Event-based）的视觉处理技术，旨在提供高动态范围（HDR）、高帧率重建、低延迟追踪和稳健的光流估计等功能。
 
-目前doc基于Tianmoucv-0.3.2版本，已开源
-开发版本为0.3.5.4，待开源
+目前文档基于 Tianmoucv-0.3.2 版本已开源。开发版本为 0.3.5.4，待开源。
 
-README
+.. contents:: 目录
+   :depth: 2
+   :local:
+
+安装指南
 ------------------------------
 
+如果你使用的是 preview 版本，请将下文中的 ``tianmoucv`` 替换为 ``Tianmoucv_preview``。
 
-**如果你用的是preview版本，下面的tianmouc都替换成Tianmoucv_preview**
-
-
-Unix系统安装
+Unix 系统安装
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1. 安装基本的编译工具：
 
-
-
-step 1. 安装基本的编译工具
-
-.. code:: bash
+.. code-block:: bash
 
     sudo apt-get update
-    sudo apt-get install make
-    sudo apt-get install cmake
-    sudo apt install build-essential
+    sudo apt-get install make cmake build-essential
     
-注:macOS使用brew安装gcc/g++，install默认使用g++
+*注：macOS 使用 brew 安装 gcc/g++，install 默认使用 g++。*
 
-.. code:: bash
+.. code-block:: bash
 
-    brew install make
-    brew install cmake
-    brea install g++,gcc
-    
-step 2. 安装python和pytorch，尽量使用cuda版本与anaconda
+    brew install make cmake gcc
 
-.. code:: bash
+2. 安装 Python 和 PyTorch（推荐使用 CUDA 版本与 Anaconda）：
+
+.. code-block:: bash
 
     conda create -n tianmoucv --python=3.10
     conda activate tianmoucv
     conda install pytorch torchvision torchaudio pytorch-cuda=12.0 -c pytorch -c nvidia
-  
-step 3. 执行自动安装脚本
 
-.. code:: bash
+3. 执行自动安装脚本：
+
+.. code-block:: bash
 
     pip install tianmoucv -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-或者从源码安装(某些特殊情况下.so文件无法自动编译时可使用)
+或者从源码安装：
 
-.. code:: bash
+.. code-block:: bash
 
     git clone https://github.com/Tianmouc/tianmoucv_preview.git
     cd tianmoucv_preview
     sh install.sh
-    
 
-
-Windows系统安装
+Windows 系统安装
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-step 1. 安装基本的编译工具
+1. 安装基本的编译工具（MinGW, Make, CMake, Git）：
 
-安装minGW,make,cmake，git 前往对应官网下载
+- `MinGW-w64 <https://www.mingw-w64.org/>`_ (建议下载最新预编译版本)
+- `CMake <https://cmake.org/download/>`_
+- `Make for Windows <https://gnuwin32.sourceforge.net/packages/make.htm>`_
+- `Git for Windows <https://git-scm.com/download/win>`_
 
-- https://www.mingw-w64.org/
+*注意：将 MinGW 的 bin 文件夹路径添加到系统环境变量 PATH 中。*
 
-minGW是一个windows上的gnu最小系统，建议直接下载最新版本的预编译压缩包,以支持最新的c++协议
+2. 安装 Python 和 PyTorch：
 
-https://github.com/niXman/mingw-builds-binaries/releases
-
-将解压后的文件中的bin文件夹路径添加到系统环境变量中的PATH内，保证命令行可以直接调用g++
-
-（optional）如果你需要使用sdk，那么你还需要进一步安装opencv和cyusb，然后安装cmake
-
-- https://cmake.org/download/
-- https://gnuwin32.sourceforge.net/packages/make.htm
-- https://git-scm.com/download/win
-
-
-step 2. 安装python和pytorch，尽量使用cuda版本与anaconda
-
-.. code:: bash
+.. code-block:: bash
 
     conda create -n tianmoucv --python=3.10
     conda activate tianmoucv
     conda install pytorch torchvision torchaudio pytorch-cuda=12.0 -c pytorch -c nvidia
-  
-step 3. 执行自动安装脚本
 
-.. code:: bash
+3. 执行自动安装脚本：
+
+.. code-block:: bash
 
     git clone git@github.com:Tianmouc/tianmoucv.git
     cd tianmoucv
     ./install.bat
 
-数据解码说明
-------------------------------
-.. image:: _static/decode.jpg
-    :width: 80%
-    
-解码数据在tianmoucv.data的self.prepocess输入之前完成
-
-
-.. _index_basic:
-
-
-说明文档索引
+软件包结构与功能概览
 ------------------------------
 
+TianMouCV 核心包分为以下几个主要模块：
 
-- :ref:`数据 <index_data>`
+- **tianmoucv.camera**: 相机 SDK 与实时流接口，支持多目相机同时使用及自动曝光控制。
+- **tianmoucv.data**: 灵活的数据读取器，支持多种格式（.tmdat, PCIe 二进制数据）和数据集管理。
+- **tianmoucv.isp**: 图像信号处理，包含 RAW 到 RGB 处理、高动态范围（HDR）融合、去马赛克及可视化工具。
+- **tianmoucv.proc**: 核心算法库，分为特征提取、光流估计、图像重建和目标追踪等子模块。
+- **tianmoucv.sim**: 传感器软件仿真器，能够模拟真实硬件的 2x2 ROD 分簇结构、多种噪声模型（泊松噪声、读出噪声、固定模式噪声等）以及稀疏编码逻辑。
+- **tianmoucv.rdp**: 数据解码与协议处理模块。
 
-- :ref:`ISP处理方法 <index_isp>`
-    
-- :ref:`usb sdk接口 <index_camera>`
+数据格式说明 (TMDAT)
+------------------------------
 
-- :ref:`算法库 <index_proc>`   
+TMDAT 是 Tianmouc 传感器记录数据的标准格式。一个典型的数据集结构如下：
 
-    - :ref:`特征 <index_features>`
-    
-    - :ref:`追踪 <index_tracking>`
+.. code-block:: text
 
-    - :ref:`光流 <index_of>`
+    ├── dataset_root/
+    │   ├── sample_name (matchkey)/
+    │   │   ├── cone/
+    │   │       ├── info.txt
+    │   │       ├── xxx.tmdat  (存储 RGB/RAW 数据，低帧率)
+    │   │   ├── rod/
+    │   │       ├── info.txt
+    │   │       ├── xxx.tmdat  (存储 TD, SDL, SDR 数据，高帧率)
 
-    - :ref:`重建 <index_rec>`
-    
-- :ref:`调用示例 <index_examples>`
+- **CONE (RGB)**: 对应低帧率高分辨率的图像流（30.3 fps）。
+- **ROD (TSD)**: 对应高帧率（最高 10000 fps）的差分数据流。
+- **matchkey**: 数据集索引中的唯一标识。
 
+调用示例说明
+------------------------------
 
+在 ``tianmoucv_example`` 目录下提供了丰富的示例程序，涵盖了从基础控制到高级算法的应用：
 
-.. _index_data:
+基础控制与数据处理
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- **相机操作**: ``camera/open_camera.py`` (开启相机流), ``camera/TMC_GUI_controller.py`` (图形界面控制器)。
+- **数据管理**: ``introduction_to_tianmouc_data.ipynb`` (详细讲解 TMDAT 格式与读取方式)。
+- **格式转换**: ``data/convert_pcie_bin_to_tmdat.py`` (将 PCIe 二进制数据转换为标准 TMDAT 格式)。
 
-Tianmocu原始数据读取(data reader)
----------------------------------------------------
-  
-USB data 读取
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: tianmoucv.data.tianmoucData
-   :members:
-   :no-index:
-   :show-inheritance:
-   
-PICE data 读取
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+传感器仿真 (Simulator)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- **仿真器分析**: ``simulator/Tianmouc_Simulator_Analysis.md`` (详细的传感器建模分析报告)。
+- **交互式仿真**: ``simulator/sim.ipynb`` (展示如何将普通视频序列转换为仿真 Tianmouc 数据流)。
 
-.. automodule:: tianmoucv.data.tianmoucData_pcie
-   :members:
-   :no-index:
-   :show-inheritance:
-   
-   
-.. _index_isp:   
+核心算法应用 (Proc)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- **光流估计 (Optical Flow)**: 
+    - ``proc/optical_flow/opticalflow_HS_method.ipynb`` (传统 Horn-Schunck 方法)。
+    - ``proc/optical_flow/opticalflow_LK_method.ipynb`` (传统 Lucas-Kanade 方法)。
+    - ``proc/optical_flow/opticalflow_spynet.ipynb`` (深度学习 SpyNet 模型)。
+- **图像重建 (Reconstruction)**: 
+    - ``proc/reconstructor/reconstruct_gray.ipynb`` (基础灰度重建)。
+    - ``proc/reconstructor/reconstruct_tiny_unet.ipynb`` (轻量级 UNet 重建)。
+    - ``proc/reconstructor/SLIM/`` (自监督运动图像学习算法实现)。
+- **目标追踪 (Tracking)**: 
+    - ``proc/feature_tracking_sd.ipynb`` (基于 SD 数据的特征点提取与追踪)。
+- **图像增强**: 
+    - ``proc/denoise/denoise_tmdat_lvatf.ipynb`` (低照度降噪算法)。
+    - ``proc/deblur/deblur_stgdnet.ipynb`` (基于时空梯度的去模糊算法)。
 
-ISP处理方法
----------------------------------------------------
+API 接口详细说明
+------------------------------
 
-.. automodule:: tianmoucv.isp.isp_basic
-   :members:
-   :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.isp.transform
-   :members:
-   :no-index:
-   :show-inheritance:
-
-   
 .. _index_camera:
 
-Tianmocu python相机接口(仅支持usb)
----------------------------------------------------
+相机接口 (tianmoucv.camera)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+主要提供相机连接、流媒体读取和自动曝光等功能。
 
 .. automodule:: tianmoucv.camera.sdk_utils
    :members:
    :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.camera.controller
+
+.. _index_data:
+
+数据读取 (tianmoucv.data)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+支持从本地存储读取 Tianmouc 原始数据并进行预处理。
+
+.. automodule:: tianmoucv.data.tianmoucData
    :members:
    :no-index:
-   :show-inheritance:
-   
 
-.. _index_proc:   
+.. _index_isp:
 
-算法库(proc)
----------------------------------------------------
+图像处理 (tianmoucv.isp)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+提供 RAW 图像到 RGB 图像的转换，以及差分数据的可视化。
 
-.. _index_features:   
+.. automodule:: tianmoucv.isp.isp_basic
+   :members:
+   :no-index:
 
-特征库(features)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _index_sim:
 
+传感器仿真器 (tianmoucv.sim)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+模拟传感器硬件逻辑，生成合成数据。
+
+- **run_sim**: 高级接口，处理图像序列文件夹，输出完整的数据集结构。
+- **run_sim_singleimg**: 简单接口，处理单张图像，输出仿真的差分张量。
+
+.. automodule:: tianmoucv.sim.simple_tmc_sim_advance
+   :members:
+   :no-index:
+
+.. _index_proc:
+
+算法库 (tianmoucv.proc)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+特征库 (features)
+"""""""""""""""""""""""""""""""""""""""""""""
 .. automodule:: tianmoucv.proc.features.diff
    :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. _index_tracking:   
-
-特征库追踪
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: tianmoucv.proc.tracking
-   :members:
    :no-index:
-   :show-inheritance:
-   
-   
-.. _index_of:   
 
-光流算法库(opticalFlow)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. automodule:: tianmoucv.proc.opticalflow.basic
-   :members:
-   :no-index:
-   :show-inheritance:
-
+光流算法 (opticalflow)
+"""""""""""""""""""""""""""""""""""""""""""""
 .. automodule:: tianmoucv.proc.opticalflow.estimator
    :members:
    :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.proc.opticalflow.sdraft_net
-   :members:
-   :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.proc.opticalflow.spy_net
-   :members:
-   :no-index:
-   :show-inheritance:
 
-.. _index_rec:
-
-重建算法库(reconstructor)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+重建算法 (reconstruct)
+"""""""""""""""""""""""""""""""""""""""""""""
 .. automodule:: tianmoucv.proc.reconstruct.basic
    :members:
    :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.proc.reconstruct.integration
-   :members:
-   :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.proc.reconstruct.tiny_unet
-   :members:
-   :no-index:
-   :show-inheritance:
-   
-.. automodule:: tianmoucv.proc.reconstruct.fuse_net
-   :members:
-   :no-index:
-   :show-inheritance:
 
-   
-.. _index_examples: 
+目标追踪 (tracking)
+"""""""""""""""""""""""""""""""""""""""""""""
+.. automodule:: tianmoucv.proc.tracking.feature_tracker
+   :members:
+   :no-index:
 
-调用示例
--------------------------
+详细示例索引
+------------------------------
+
 .. toctree::
     :maxdepth: 1
 

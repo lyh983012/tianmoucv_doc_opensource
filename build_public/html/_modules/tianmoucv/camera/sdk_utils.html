@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tianmoucv.camera.sdk_utils &mdash; Tianmoucv alpha 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=406e4f49"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Tianmoucv
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Outline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tianmoucv/introduction.html">TianMouCV算法库</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Tianmoucv</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">tianmoucv.camera.sdk_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>tianmoucv.camera.sdk_utils 源代码</h1><div class="highlight"><pre>
+<span></span><span class="c1">#coding=utf-8</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&gt;&gt;this data reader is a dev version in 2024-01-06&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">ctypes</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">ctypes</span>
+
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">local</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
+
+<span class="n">global_aop_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+<span class="n">global_cop_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+<span class="n">result_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+<span class="n">inference_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+
+<span class="n">ROD_W</span> <span class="o">=</span><span class="mi">160</span>
+<span class="n">ROD_H</span> <span class="o">=</span><span class="mi">160</span>
+<span class="n">CONE_W</span> <span class="o">=</span><span class="mi">320</span>
+<span class="n">CONE_H</span> <span class="o">=</span><span class="mi">320</span>
+
+<span class="c1">############################################################</span>
+<span class="c1">#</span>
+<span class="c1"># Basic data type</span>
+<span class="c1">#</span>
+<span class="c1">############################################################</span>
+<span class="k">class</span> <span class="nc">tianmoucData</span><span class="p">(</span><span class="n">Structure</span><span class="p">):</span>
+    <span class="n">_fields_</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;isRod&quot;</span><span class="p">,</span> <span class="n">c_int</span><span class="p">),</span><span class="c1">#1:rod,0:cone</span>
+                <span class="p">(</span><span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="n">c_ulonglong</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">&quot;sdl_p&quot;</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ubyte</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s2">&quot;sdr_p&quot;</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ubyte</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s2">&quot;td_p&quot;</span><span class="p">,</span>  <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ubyte</span><span class="p">)),</span>
+                <span class="p">(</span><span class="s2">&quot;rgb_p&quot;</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_float</span><span class="p">))]</span>
+                
+<span class="c1">############################################################</span>
+<span class="c1">#</span>
+<span class="c1"># A simple streaming reader</span>
+<span class="c1"># Author: Y. Lin</span>
+<span class="c1"># 2024 01 06</span>
+<span class="c1">#</span>
+<span class="c1">############################################################</span>
+<div class="viewcode-block" id="TMstreamingDataReader">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.camera.sdk_utils.TMstreamingDataReader">[文档]</a>
+<span class="k">class</span> <span class="nc">TMstreamingDataReader</span><span class="p">():</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        这段代码实现了一个名为TMstreamingDataReader的类，作为数据读取器。</span>
+<span class="sd">        类的初始化方法（init）中，加载了SDK库文件，并初始化了相机。</span>
+
+<span class="sd">        @parameter cfg_path: csv格式的配置文件</span>
+<span class="sd">        @parameter lib_path: 预编译的sdk动态链接库，ubuntu为.so，windows为.dll，macOS为,dylib</span>
+<span class="sd">        @parameter device_id: 相机的id，支持多目相机同时使用</span>
+
+<span class="sd">        主要函数说明：</span>
+<span class="sd">        </span>
+<span class="sd">        - __init__方法：加载SDK库文件，初始化相机，准备数据包。 </span>
+<span class="sd">        - setExposure方法：设置相机的曝光时间。 </span>
+<span class="sd">        - __enter__方法：开始读取数据。 </span>
+<span class="sd">        - __exit__方法：处理异常并停止相机。 </span>
+<span class="sd">        - __call__方法：读取数据帧并返回。</span>
+<span class="sd">        </span>
+<span class="sd">        这段代码的功能是通过SDK库读取相机的数据帧并进行处理，提供了读取数据和设置曝光时间的接口。</span>
+<span class="sd">        在使用该类时，可以通过with语句自动调用__enter__和__exit__方法，确保资源的正确释放。</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cfg_path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">lib_path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">device_id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="c1"># load sdk lib</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cfg_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cfg_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span><span class="s2">&quot;lib&quot;</span><span class="p">,</span><span class="s2">&quot;Golden_HCG_seq.csv&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lib_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lib_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span><span class="s2">&quot;lib&quot;</span><span class="p">,</span><span class="s2">&quot;libtianmouc.so&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfg_path</span>  <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cfg_path</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">tm_sdk</span> <span class="o">=</span> <span class="n">cdll</span><span class="o">.</span><span class="n">LoadLibrary</span><span class="p">(</span><span class="n">lib_path</span><span class="p">)</span>
+        <span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmOpenCamera</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_uint64</span>
+
+        <span class="c1"># init camera</span>
+        <span class="n">cameraHandle</span> <span class="o">=</span> <span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmOpenCamera</span><span class="p">(</span><span class="n">device_id</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader]type(cameraHandle)&#39;</span><span class="p">,</span><span class="nb">type</span><span class="p">(</span><span class="n">cameraHandle</span><span class="p">),</span><span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmOpenCamera</span><span class="o">.</span><span class="n">restype</span><span class="p">)</span>
+
+        <span class="c1"># prepare data pack</span>
+        <span class="n">coneData</span> <span class="o">=</span> <span class="n">pointer</span><span class="p">(</span><span class="n">c_float</span><span class="p">(</span><span class="n">CONE_W</span><span class="o">*</span><span class="n">CONE_H</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">tdData1</span> <span class="o">=</span> <span class="n">pointer</span><span class="p">(</span><span class="n">c_ubyte</span><span class="p">(</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">))</span>
+        <span class="n">sdData1</span> <span class="o">=</span> <span class="n">pointer</span><span class="p">(</span><span class="n">c_ubyte</span><span class="p">(</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">))</span>
+        <span class="n">sdData2</span> <span class="o">=</span> <span class="n">pointer</span><span class="p">(</span><span class="n">c_ubyte</span><span class="p">(</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">))</span>
+        <span class="n">idRod</span> <span class="o">=</span> <span class="n">c_int</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">c_ulonglong</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">tianmoucDataValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">idRod</span><span class="p">,</span><span class="n">timestamp</span><span class="p">,</span><span class="n">tdData1</span><span class="p">,</span><span class="n">sdData1</span><span class="p">,</span><span class="n">sdData2</span><span class="p">,</span><span class="n">coneData</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span> <span class="o">=</span> <span class="n">tianmoucData</span><span class="p">(</span><span class="o">*</span><span class="n">tianmoucDataValue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataPack_p</span>	 <span class="o">=</span> <span class="n">pointer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="p">)</span>
+
+        <span class="c1">#store data buffer and ssdk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tm_sdk</span> <span class="o">=</span> <span class="n">tm_sdk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span> <span class="o">=</span> <span class="n">c_uint64</span><span class="p">(</span><span class="n">cameraHandle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cameraHandle</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] Tianmouc camera:&#39;</span><span class="p">,</span><span class="nb">hex</span><span class="p">(</span><span class="n">cameraHandle</span><span class="p">),</span><span class="s1">&#39;is raedy&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tm_sdk</span><span class="o">.</span><span class="n">IICconfig_download</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_path</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] Tianmouc camera:&#39;</span><span class="p">,</span><span class="nb">hex</span><span class="p">(</span><span class="n">cameraHandle</span><span class="p">),</span><span class="s1">&#39; configure downloaded&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] fail to get correct camera handle:&#39;</span><span class="p">,</span><span class="nb">hex</span><span class="p">(</span><span class="n">cameraHandle</span><span class="p">))</span>
+            
+
+    <span class="k">def</span> <span class="nf">setExposure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">aoptime</span><span class="p">,</span><span class="n">coptime</span><span class="p">,</span><span class="n">aopG</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">copG</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">aoptime</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">aoptime</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span><span class="mi">1240</span><span class="p">)</span>
+        <span class="n">coptime</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">coptime</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span><span class="mi">15000</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">aoptime</span><span class="p">,</span><span class="n">coptime</span><span class="p">,</span><span class="n">aopG</span><span class="p">,</span><span class="n">copG</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmExposureSet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span><span class="p">,</span><span class="n">aoptime</span><span class="p">,</span><span class="n">coptime</span><span class="p">,</span><span class="n">aopG</span><span class="p">,</span><span class="n">copG</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1">#1:par,8:bit</span>
+
+    <span class="c1">#use python-with to start reader</span>
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># start camera</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] download&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmStartTransfer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] Tianmouc data transfer start:&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+    
+
+    <span class="c1"># deal with exception</span>
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] catch exception:&#39;</span><span class="p">,</span><span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">)</span>
+        <span class="c1">#stop camera</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmCameraUninit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+    <span class="c1"># functional object</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#ts = time.time()</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tm_sdk</span><span class="o">.</span><span class="n">tmGetFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraHandle</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dataPack_p</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[TMstreamingDataReader] loss data or loss connection, this frame is not correct&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">isRod</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">td_buffer</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">td_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ubyte</span><span class="o">*</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">sdl_buffer</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">sdl_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ubyte</span><span class="o">*</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">sdr_buffer</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">sdr_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_ubyte</span><span class="o">*</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">TD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">td_buffer</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">byte</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ROD_H</span><span class="p">,</span><span class="n">ROD_W</span><span class="p">)</span>
+            <span class="n">SDL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">sdl_buffer</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">byte</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ROD_H</span><span class="p">,</span><span class="n">ROD_W</span><span class="p">)</span>
+            <span class="n">SDR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">sdr_buffer</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">byte</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">ROD_W</span><span class="o">*</span><span class="n">ROD_H</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ROD_H</span><span class="p">,</span><span class="n">ROD_W</span><span class="p">)</span>
+            <span class="n">isRod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">isRod</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">timestamp</span>
+            <span class="k">return</span> <span class="n">isRod</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,(</span><span class="n">TD</span><span class="p">,</span><span class="n">SDL</span><span class="p">,</span><span class="n">SDR</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">RGB_buffer</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">rgb_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_float</span><span class="o">*</span><span class="n">CONE_H</span><span class="o">*</span><span class="n">CONE_W</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mi">3</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">RGB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">RGB_buffer</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">CONE_H</span><span class="p">,</span><span class="n">CONE_W</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">isRod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">isRod</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataPack</span><span class="o">.</span><span class="n">timestamp</span>
+            <span class="k">return</span> <span class="n">isRod</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">RGB</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

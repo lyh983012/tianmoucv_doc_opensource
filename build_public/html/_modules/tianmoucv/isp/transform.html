@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tianmoucv.isp.transform &mdash; Tianmouc alpha 文档</title>
+  <title>tianmoucv.isp.transform &mdash; Tianmoucv alpha 文档</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
 
@@ -32,7 +32,7 @@
           
           
           <a href="../../../index.html" class="icon icon-home">
-            Tianmouc
+            Tianmoucv
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -53,7 +53,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../../index.html">Tianmouc</a>
+          <a href="../../../index.html">Tianmoucv</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -74,7 +74,8 @@
   <h1>tianmoucv.isp.transform 源代码</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
-
+<span class="kn">from</span> <span class="nn">torchvision.transforms.functional</span> <span class="kn">import</span> <span class="n">rotate</span> <span class="k">as</span> <span class="n">tv_rotate</span>
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">ConvexHull</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
@@ -82,6 +83,12 @@
 <span class="c1"># ===============================================================</span>
 <span class="c1"># SD坐标变换</span>
 <span class="c1"># ===============================================================</span>
+
+        
+<span class="k">def</span> <span class="nf">fourdirection2xy</span><span class="p">(</span><span class="n">sd</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fourdirection2xy is decrepted, please use SD2XY&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SD2XY</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
+    
 <div class="viewcode-block" id="SD2XY">
 <a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.SD2XY">[文档]</a>
 <span class="k">def</span> <span class="nf">SD2XY</span><span class="p">(</span><span class="n">sd_raw</span><span class="p">:</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">:</span>
@@ -89,6 +96,7 @@
 <span class="sd">    input: [h,w,2]/[2,h,w]/[n,2,h,w]</span>
 <span class="sd">    output: [h,2*w],[h,2*w] or [n,h,2*w],[n,h,2*w]</span>
 <span class="sd">    坐标变换规则参照http://www.tianmouc.cn:40000/tianmoucv/introduction.html</span>
+<span class="sd">    y 正方向是↓ x正方形是→</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sd_raw</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
         <span class="k">assert</span> <span class="p">(</span><span class="n">sd_raw</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span> <span class="ow">or</span> <span class="n">sd_raw</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span><span class="p">)</span>
@@ -112,8 +120,8 @@
     <span class="n">sdur</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">sdur</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">target_size</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">sdlr</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">sdlr</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">target_size</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">,</span> <span class="n">align_corners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="n">sdx</span> <span class="o">=</span> <span class="p">((</span><span class="n">sdul</span> <span class="o">+</span> <span class="n">sdll</span><span class="p">)</span><span class="o">/</span><span class="mf">1.414</span> <span class="o">-</span> <span class="p">(</span><span class="n">sdur</span> <span class="o">+</span> <span class="n">sdlr</span><span class="p">)</span><span class="o">/</span><span class="mf">1.414</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
-    <span class="n">sdy</span> <span class="o">=</span> <span class="p">((</span><span class="n">sdur</span> <span class="o">-</span> <span class="n">sdlr</span><span class="p">)</span><span class="o">/</span><span class="mf">1.414</span> <span class="o">+</span> <span class="p">(</span><span class="n">sdul</span> <span class="o">-</span> <span class="n">sdll</span><span class="p">)</span><span class="o">/</span><span class="mf">1.414</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">sdx</span> <span class="o">=</span> <span class="p">(</span><span class="n">sdul</span> <span class="o">+</span> <span class="n">sdll</span> <span class="o">-</span> <span class="n">sdur</span> <span class="o">-</span> <span class="n">sdlr</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+    <span class="n">sdy</span> <span class="o">=</span> <span class="p">(</span><span class="n">sdur</span> <span class="o">-</span> <span class="n">sdlr</span> <span class="o">+</span> <span class="n">sdul</span> <span class="o">-</span> <span class="n">sdll</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sd_raw</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">sdx</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">sdy</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -121,13 +129,76 @@
         <span class="k">return</span> <span class="n">sdx</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">sdy</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
 
 
+<span class="c1"># ===============================================================</span>
+<span class="c1"># SD上采样填</span>
+<span class="c1"># ===============================================================</span>
 
-<span class="c1"># ===============================================================</span>
-<span class="c1"># SD坐标变换</span>
-<span class="c1"># ===============================================================</span>
-<span class="k">def</span> <span class="nf">fourdirection2xy</span><span class="p">(</span><span class="n">sd</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fourdirection2xy is decrepted, please use SD2XY&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SD2XY</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">upsampleTSD_conv</span><span class="p">(</span><span class="n">tsdiff</span><span class="p">):</span>
+    <span class="n">td</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+    <span class="n">sd</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span><span class="o">...</span><span class="p">]</span>
+    <span class="n">td_extend</span> <span class="o">=</span> <span class="n">upsample_cross_conv</span><span class="p">(</span><span class="n">td</span><span class="p">)</span>
+    <span class="n">sd_extend</span> <span class="o">=</span> <span class="n">upsample_horizental_conv</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">td</span><span class="p">,</span><span class="n">sd</span><span class="p">],</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="upsample_cross_conv">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.upsample_cross_conv">[文档]</a>
+<span class="k">def</span> <span class="nf">upsample_cross_conv</span><span class="p">(</span><span class="n">tensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    adjust the data space and upsampling, please refer to tianmoucv doc for detail</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># 获取输入Tensor的维度信息</span>
+    <span class="n">h</span><span class="p">,</span><span class="n">w</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">tensor_expand</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="o">*</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span><span class="n">h</span><span class="p">,</span><span class="n">w</span><span class="o">*</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">tensor_expand</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="mi">2</span><span class="p">,::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="mi">2</span><span class="p">,:]</span>
+    <span class="n">tensor_expand</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,:]</span>
+    <span class="n">channels</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">tensor_expand</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">tensor_expand</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="o">*</span><span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># 定义卷积核</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+    <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+    <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+    <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span>
+    <span class="c1"># 对输入Tensor进行反射padding</span>
+    <span class="n">padded_tensor</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;reflect&#39;</span><span class="p">)</span>
+    <span class="c1"># 将原tensor复制一份用于填充结果</span>
+    <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="c1"># 将卷积结果填充回原tensor</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">channels</span><span class="o">*</span><span class="n">T</span><span class="p">):</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">padded_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,:,</span><span class="o">...</span><span class="p">],</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">output_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,:</span> <span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">output_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,:</span> <span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">output_tensor</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="upsample_horizental_conv">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.upsample_horizental_conv">[文档]</a>
+<span class="k">def</span> <span class="nf">upsample_horizental_conv</span><span class="p">(</span><span class="n">tensor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    adjust the data space and upsampling, please refer to tianmoucv doc for detail</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">h</span><span class="p">,</span><span class="n">w</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">tensor_expand</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="o">*</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span><span class="n">h</span><span class="p">,</span><span class="n">w</span><span class="o">*</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">tensor_expand</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="mi">2</span><span class="p">,::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="mi">2</span><span class="p">,:]</span>
+    <span class="n">tensor_expand</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">,:]</span>
+    <span class="n">channels</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">tensor_expand</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">tensor_expand</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="o">*</span><span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># 定义卷积核</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">kernel</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span>
+    <span class="c1"># 对输入Tensor进行反射padding</span>
+    <span class="n">padded_tensor</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;reflect&#39;</span><span class="p">)</span>
+    <span class="c1"># 将原tensor复制一份用于填充结果</span>
+    <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="c1"># 将卷积结果填充回原tensor</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">channels</span><span class="o">*</span><span class="n">T</span><span class="p">):</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">padded_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,:,</span><span class="o">...</span><span class="p">],</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">output_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,:</span> <span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">output_tensor</span><span class="p">[</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="mi">1</span><span class="p">,:</span> <span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">output_tensor</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span></div>
+
+
 
 <span class="c1"># ===============================================================</span>
 <span class="c1"># 自卷积</span>
@@ -146,6 +217,118 @@
     <span class="n">avg_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">avg_img</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cov_len</span><span class="p">,</span> <span class="n">cov_len</span><span class="p">)</span>
     <span class="n">avg_img</span> <span class="o">=</span> <span class="n">avg_img</span> <span class="o">/</span> <span class="n">avg_img</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="c1"># 加权平均</span>
     <span class="k">return</span> <span class="n">avg_img</span>
+
+
+
+
+<span class="c1"># ===============================================================</span>
+<span class="c1"># SD和tensor的旋转操作</span>
+<span class="c1"># ===============================================================</span>
+
+
+<div class="viewcode-block" id="rotate_nd_tensor">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.rotate_nd_tensor">[文档]</a>
+<span class="k">def</span> <span class="nf">rotate_nd_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    旋转 [B, C, H, W] 张量的每个图像，并调整大小以刚好包络旋转后的内容。</span>
+<span class="sd">    Args:</span>
+<span class="sd">        tensor: 输入张量，形状 [B, C, H, W]</span>
+<span class="sd">        angle: 旋转角度（度）</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        旋转后的张量，形状 [B, C, H&#39;, W&#39;]，其中 H&#39; 和 W&#39; 是新尺寸</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">original_dim</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>  <span class="c1"># 在开头插入新维度</span>
+    <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+    <span class="c1"># 对每个图像进行旋转</span>
+    <span class="n">rotated_tensor</span> <span class="o">=</span> <span class="n">tv_rotate</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">rot_H</span><span class="p">,</span> <span class="n">rot_W</span> <span class="o">=</span> <span class="n">rotated_tensor</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">while</span> <span class="n">rotated_tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">original_dim</span><span class="p">:</span>
+        <span class="n">rotated_tensor</span> <span class="o">=</span> <span class="n">rotated_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span> 
+    <span class="k">return</span> <span class="n">rotated_tensor</span></div>
+
+
+<div class="viewcode-block" id="rotate_xyd">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.rotate_xyd">[文档]</a>
+<span class="k">def</span> <span class="nf">rotate_xyd</span><span class="p">(</span><span class="n">SD</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    可以单独用于处理SD</span>
+<span class="sd">    旋转 [B,C,H,W]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">original_dim</span> <span class="o">=</span> <span class="n">SD</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">SD</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">SD</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">SD</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">SD</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="o">==</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">SD</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">SD</span> <span class="o">=</span> <span class="n">SD</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>  <span class="c1"># 在开头插入新维度</span>
+
+    <span class="n">rotated_SD</span> <span class="o">=</span> <span class="n">rotate_nd_tensor</span><span class="p">(</span><span class="n">SD</span><span class="p">,</span><span class="n">angle</span><span class="p">)</span>
+    <span class="n">SDx</span> <span class="o">=</span> <span class="n">rotated_SD</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+    <span class="n">SDy</span> <span class="o">=</span> <span class="n">rotated_SD</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+    <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">angle</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">SD</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
+    <span class="n">cos_a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)</span>
+    <span class="n">sin_a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)</span>
+
+    <span class="n">x_rotated</span> <span class="o">=</span> <span class="n">SDx</span> <span class="o">*</span> <span class="n">cos_a</span> <span class="o">+</span> <span class="n">SDy</span> <span class="o">*</span> <span class="n">sin_a</span>
+    <span class="n">y_rotated</span> <span class="o">=</span> <span class="o">-</span> <span class="n">SDx</span> <span class="o">*</span> <span class="n">sin_a</span> <span class="o">+</span> <span class="n">SDy</span> <span class="o">*</span> <span class="n">cos_a</span>
+
+    <span class="n">rotated_SD_corrected</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">x_rotated</span><span class="p">,</span><span class="n">y_rotated</span><span class="p">],</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">rotated_SD_corrected</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">original_dim</span><span class="p">:</span>
+        <span class="n">rotated_SD_corrected</span> <span class="o">=</span> <span class="n">rotated_SD_corrected</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span> 
+    
+    <span class="k">return</span> <span class="n">rotated_SD_corrected</span></div>
+
+
+
+<div class="viewcode-block" id="rotate_txyd">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.rotate_txyd">[文档]</a>
+<span class="k">def</span> <span class="nf">rotate_txyd</span><span class="p">(</span><span class="n">txydiff</span><span class="p">,</span> <span class="n">angle</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    用于处理TD+XY的数据，可以直接作用于data reader给出的结果</span>
+<span class="sd">    旋转 [B/T,C,H,W] angle是角度</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">txydiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">txydiff</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">txydiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">txydiff</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="o">==</span><span class="mi">4</span><span class="p">)</span>
+    
+    <span class="n">xydiff</span> <span class="o">=</span> <span class="n">rotate_xyd</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">txydiff</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:,</span><span class="o">...</span><span class="p">]),</span><span class="n">angle</span><span class="p">)</span>
+    <span class="n">td</span> <span class="o">=</span> <span class="n">rotate_nd_tensor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">txydiff</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]),</span><span class="n">angle</span><span class="p">)</span>
+    <span class="n">rotate_txydiff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">td</span><span class="p">,</span><span class="n">xydiff</span><span class="p">],</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rotate_txydiff</span></div>
+
+
+
+<span class="c1"># ===============================================================</span>
+<span class="c1"># SD和tensor的镜像操作</span>
+<span class="c1"># ===============================================================</span>
+
+<div class="viewcode-block" id="flip_xyd">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.isp.transform.flip_xyd">[文档]</a>
+<span class="k">def</span> <span class="nf">flip_xyd</span><span class="p">(</span><span class="n">xydiff</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    翻转 [B,C,H,W] 的SD</span>
+<span class="sd">    注：翻转TD 不需要额外处理</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">original_dim</span> <span class="o">=</span> <span class="n">xydiff</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">xydiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">xydiff</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">xydiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">xydiff</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="o">==</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">element</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">element</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">)</span>
+    
+    <span class="k">while</span> <span class="n">xydiff</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">xydiff</span> <span class="o">=</span> <span class="n">xydiff</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>  <span class="c1"># 在开头插入新维度</span>
+
+    <span class="n">flip_xyd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">xydiff</span><span class="p">,</span> <span class="n">dims</span><span class="p">)</span>
+    <span class="k">if</span> <span class="mi">2</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">:</span>
+        <span class="n">flip_xyd</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">flip_xyd</span><span class="p">[:,</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+    <span class="k">if</span> <span class="mi">3</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">:</span>
+        <span class="n">flip_xyd</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">flip_xyd</span><span class="p">[:,</span><span class="mi">1</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+
+    <span class="k">while</span> <span class="n">flip_xyd</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">original_dim</span><span class="p">:</span>
+        <span class="n">flip_xyd</span> <span class="o">=</span> <span class="n">flip_xyd</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">]</span> 
+    <span class="k">return</span> <span class="n">flip_xyd</span></div>
+
+
 
 
 <span class="c1"># ===============================================================</span>
@@ -267,7 +450,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; 版权所有 2024, THU-CBICR。</p>
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
   </div>
 
   利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 

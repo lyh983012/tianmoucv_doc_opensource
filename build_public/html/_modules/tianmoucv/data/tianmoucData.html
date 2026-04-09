@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tianmoucv.data.tianmoucData &mdash; Tianmoucv alpha 文档</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=406e4f49"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../../../_static/translations.js?v=beaddf03"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Tianmoucv
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">Outline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tianmoucv/introduction.html">TianMouCV算法库</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Tianmoucv</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">模块代码</a></li>
+      <li class="breadcrumb-item active">tianmoucv.data.tianmoucData</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>tianmoucv.data.tianmoucData 源代码</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span><span class="o">,</span><span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">math</span><span class="o">,</span><span class="nn">time</span><span class="o">,</span><span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">flag</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">tianmoucv.rdp_usb</span> <span class="kn">import</span> <span class="n">rod_decoder_py</span> <span class="k">as</span> <span class="n">rdc</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: no decoder found, try to compile it under ./rod_decoder_py&quot;</span><span class="p">)</span>
+    <span class="n">current_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+    <span class="n">parent_folder_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">current_file_path</span><span class="p">))</span>
+    <span class="n">aim_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parent_folder_path</span><span class="p">,</span><span class="s1">&#39;rdp_usb&#39;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">aim_path</span><span class="p">)</span>
+    <span class="n">current_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Current Path:&quot;</span><span class="p">,</span> <span class="n">current_path</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span> <span class="s1">&#39;./compile_pybind.sh&#39;</span><span class="p">])</span>
+    <span class="kn">from</span> <span class="nn">tianmoucv.rdp_usb</span> <span class="kn">import</span> <span class="n">rod_decoder_py</span> <span class="k">as</span> <span class="n">rdc</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;compile decoder successfully&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;If you still get this message,please try:</span><span class="se">\n</span><span class="s1"> 1. run it in a python script (only once) </span><span class="se">\n</span><span class="s1"> 2. use source code install to see what happened&#39;</span><span class="p">)</span>
+  
+    
+<span class="c1">#用于重建</span>
+<span class="kn">from</span> <span class="nn">tianmoucv.proc.reconstruct</span> <span class="kn">import</span> <span class="n">poisson_blending</span>
+<span class="kn">from</span> <span class="nn">tianmoucv.proc.denoise</span> <span class="kn">import</span> <span class="n">custom_round</span><span class="p">,</span><span class="n">conv_and_threshold</span><span class="p">,</span><span class="n">conv_and_threshold_1</span><span class="p">,</span><span class="n">denoise_defualt_args</span>
+<span class="kn">from</span> <span class="nn">tianmoucv.isp</span> <span class="kn">import</span> <span class="n">default_rgb_isp</span><span class="p">,</span><span class="n">upsample_cross_conv</span><span class="p">,</span><span class="n">SD2XY</span>
+<span class="kn">from</span> <span class="nn">.tianmoucData_basic</span> <span class="kn">import</span> <span class="n">TianmoucDataReader_basic</span>
+<span class="kn">from</span> <span class="nn">.tianmoucDataSampleParser</span> <span class="kn">import</span> <span class="n">TianmoucDataSampleParser</span>
+<span class="kn">from</span> <span class="nn">.singlePathwayDecoder</span> <span class="kn">import</span> <span class="n">multiple_rods_tmdat_to_npy_from_addr</span>
+
+<div class="viewcode-block" id="TianmoucDataReader">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader">[文档]</a>
+<span class="k">class</span> <span class="nc">TianmoucDataReader</span><span class="p">(</span><span class="n">TianmoucDataReader_basic</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    - TianmoucDataReader(version 0.3.7.4 in dev)</span>
+<span class="sd">        - Data structure</span>
+<span class="sd">            ├── dataset</span>
+<span class="sd">            │   ├── matchkey(sample name)</span>
+<span class="sd">            │   │   ├── cone</span>
+<span class="sd">            │   │       ├── info.txt</span>
+<span class="sd">            │   │       ├── xxx.tmdat</span>
+<span class="sd">            │   │   ├── rod</span>
+<span class="sd">            │   │       ├── info.txt</span>
+<span class="sd">            │   │       ├── xxx.tmdat</span>
+<span class="sd">            │   │   ├── cone1</span>
+<span class="sd">            │   │       ├── info.txt</span>
+<span class="sd">            │   │       ├── xxx.tmdat</span>
+<span class="sd">            │   │   ├── rod1</span>
+<span class="sd">            │   │       ├── info.txt</span>
+<span class="sd">            │   │       ├── xxx.tmdat</span>
+<span class="sd">        -  @dataPath：</span>
+<span class="sd">            - a path to a sample/dataset: string</span>
+<span class="sd">            - a list of dataset path/sample: [string1, string2]   </span>
+<span class="sd">            - if the path is belong to a dataset/datasets or a list of samples, please use matchkey to index a certain sample, or set matchkey = None</span>
+<span class="sd">            - if you use multiple camera, set camera_idx</span>
+<span class="sd">        - @matchkey：</span>
+<span class="sd">            - matchkey should be unified, is the only key to select data sample</span>
+<span class="sd">            - matchkey is the folder name containing the cop/aop data folder</span>
+<span class="sd">        - @N: number of continous samples, N=1 as default</span>
+<span class="sd">            - the returned sample will contain (N+1) COP，and N*M+1 AOP</span>
+<span class="sd">            - for example N=1, in 750@8bit, M=750/30=25, M = 25, a sample contain 2 COP and 26 AOP</span>
+<span class="sd">        - @camera_idx：</span>
+<span class="sd">            - camera_idx = 0 as default</span>
+<span class="sd">            - in multi-camera system, use camera_idx to create a dataset fot certain camera</span>
+<span class="sd">        - @MAXLEN:</span>
+<span class="sd">            - the maximum read data length, set -1 to read all data, used only in training task</span>
+<span class="sd">        [Output]</span>
+<span class="sd">        create a dataset, the containings please refer to TianmoucDataReader.__getitem__()</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">,</span>
+                 <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">camera_idx</span><span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">aop_denoise</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">aop_denoise_args</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">showList</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">MAXLEN</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">uniformSampler</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">matchkey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">cachePath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">ifcache</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                 <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">use_data_parser</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">_correct_sd_upsampler</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">dark_level</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="n">N</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_data_parser</span> <span class="o">=</span> <span class="n">use_data_parser</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span>
+                 <span class="n">showList</span><span class="o">=</span><span class="n">showList</span><span class="p">,</span>
+                 <span class="n">MAXLEN</span><span class="o">=</span><span class="n">MAXLEN</span><span class="p">,</span>
+                 <span class="n">uniformSampler</span> <span class="o">=</span> <span class="n">uniformSampler</span><span class="p">,</span>
+                 <span class="n">camera_idx</span><span class="o">=</span> <span class="n">camera_idx</span><span class="p">,</span>
+                 <span class="n">matchkey</span><span class="o">=</span><span class="n">matchkey</span><span class="p">,</span>
+                 <span class="n">cachePath</span><span class="o">=</span><span class="n">cachePath</span><span class="p">,</span>
+                 <span class="n">ifcache</span> <span class="o">=</span> <span class="n">ifcache</span><span class="p">,</span> 
+                 <span class="n">print_info</span><span class="o">=</span><span class="n">print_info</span><span class="p">,</span>
+                 <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                 <span class="n">strict</span> <span class="o">=</span> <span class="n">strict</span><span class="p">,</span>
+                 <span class="n">dark_level</span> <span class="o">=</span> <span class="n">dark_level</span><span class="p">)</span> <span class="c1"># 调用父类的属性赋值方法</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise</span> <span class="o">=</span> <span class="n">aop_denoise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span> <span class="o">=</span> <span class="n">aop_denoise_args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_correct_sd_upsampler</span> <span class="o">=</span> <span class="n">_correct_sd_upsampler</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader]Customising your aop_denoise_args using tianmoucv.data.denoise_utils.denoise_defualt_args()&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader]Better to provide:{</span><span class="se">\&#39;</span><span class="s1">TD</span><span class="se">\&#39;</span><span class="s1">:[np.array]*2,</span><span class="se">\&#39;</span><span class="s1">SDL</span><span class="se">\&#39;</span><span class="s1">:[np.array]*2*aop_cop_rate,</span><span class="se">\&#39;</span><span class="s1">SDR</span><span class="se">\&#39;</span><span class="s1">:[np.array]*2*aop_cop_rate}&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;TD&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">self_calibration</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader] cannot find TD dark, use self calibration&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;TD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">td_fpn_calibration_</span><span class="p">(</span><span class="n">Num</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader] cannot find SDL dark, use ZERO&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;TD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDL&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">self_calibration</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader] cannot find SDL dark, use self calibration&#39;</span><span class="p">)</span>
+                    <span class="n">SDL_dark</span><span class="p">,</span><span class="n">SDR_dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd_fpn_calibration_</span><span class="p">(</span><span class="n">Num</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDL_dark</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDR_dark</span> 
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader] cannot find SDL dark, use ZERO&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span> 
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">choose_correct_fpn</span><span class="p">(</span><span class="n">thr_fpn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">thr_fpn</span><span class="p">)</span> <span class="c1">#判断奇偶帧</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">print_info</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">denoise_function</span> <span class="o">=</span> <span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">denoise_function</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">denoise_function_args</span> <span class="o">=</span> <span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">denoise_function_args</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader Warning] Doesn</span><span class="se">\&#39;</span><span class="s1">t support multiple keys for Denoise in this version&#39;</span><span class="p">)</span>
+            
+
+    <span class="c1">#你可以重写这个extration逻辑以获得更复杂的数据读取方法，例如抽帧等        </span>
+    <span class="k">def</span> <span class="nf">extraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">MAXLEN</span><span class="p">,</span><span class="n">uniformSampler</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="n">new_legalFileList</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="n">legalFileList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">]</span> 
+            <span class="c1">#把相邻N个同步后的包合并为一个sample来读取</span>
+            <span class="n">newsample_merge</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+            <span class="n">accum_count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">sampleid</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">legalFileList</span><span class="p">)):</span>
+                <span class="n">sample_0</span> <span class="o">=</span> <span class="n">legalFileList</span><span class="p">[</span><span class="n">sampleid</span><span class="p">]</span>
+                <span class="n">cone0</span> <span class="o">=</span> <span class="n">sample_0</span><span class="p">[</span><span class="s1">&#39;coneid&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">accum_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="s1">&#39;sysTimeStamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_0</span><span class="p">[</span><span class="s1">&#39;sysTimeStamp&#39;</span><span class="p">]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="s1">&#39;coneid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cone0</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="s1">&#39;rodid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_0</span><span class="p">[</span><span class="s1">&#39;rodid&#39;</span><span class="p">]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sample_0</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">sample_0</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_0</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> 
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="s1">&#39;coneid&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">cone0</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="s1">&#39;rodid&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sample_0</span><span class="p">[</span><span class="s1">&#39;rodid&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">sample_0</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="mi">1</span><span class="p">:]</span>
+                    <span class="n">newsample_merge</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">sample_0</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">1</span><span class="p">:]</span>
+                    
+                <span class="n">accum_count</span> <span class="o">+=</span> <span class="mi">1</span>
+               
+                <span class="k">if</span> <span class="n">accum_count</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">:</span>
+                    <span class="n">new_legalFileList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newsample_merge</span><span class="p">)</span>
+                    <span class="n">newsample_merge</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+                    <span class="n">accum_count</span> <span class="o">=</span><span class="mi">0</span>
+                    <span class="k">continue</span>
+                    <span class="c1">#拼接更多的sample，以待一起读取</span>
+
+            <span class="k">if</span> <span class="n">MAXLEN</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_legalFileList</span><span class="p">)</span><span class="o">&gt;</span><span class="n">MAXLEN</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">uniformSampler</span><span class="p">:</span>
+                        <span class="n">adptiverate</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_legalFileList</span><span class="p">)</span><span class="o">//</span><span class="n">MAXLEN</span>
+                        <span class="n">new_legalFileList</span>  <span class="o">=</span> <span class="p">[</span><span class="n">new_legalFileList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">adptiverate</span><span class="o">*</span><span class="n">MAXLEN</span><span class="p">,</span> <span class="n">adptiverate</span><span class="p">)]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">new_legalFileList</span>  <span class="o">=</span> <span class="n">new_legalFileList</span><span class="p">[:</span><span class="n">MAXLEN</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">new_legalFileList</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader FULL]&#39;</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="s1">&#39;extracted length:&#39;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">new_legalFileList</span><span class="p">))</span>
+
+    <span class="c1">#同理，你也可以通过修改这个函数获得更复杂的数据预处理手段</span>
+<div class="viewcode-block" id="TianmoucDataReader.packRead">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader.packRead">[文档]</a>
+    <span class="k">def</span> <span class="nf">packRead</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">idx</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">ifSync</span> <span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">needPreProcess</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        use the decoder and isp preprocess to generate a paired (RGB,n*TSD) sample dict:</span>
+<span class="sd">        </span>
+<span class="sd">            - COP</span>
+<span class="sd">                - COP is stored seprately as F0，F1，F2 ... FN+1, use string key to get them</span>
+<span class="sd">                - COP&#39;s framerate is 30.3fps</span>
+<span class="sd">                - i = 0~N</span>
+<span class="sd">                - sample[&#39;Fi_without_isp&#39;] = only demosaced frame data, without addtional isp 3*320*640, t=t_0+i*T</span>
+<span class="sd">                - sample[&#39;Fi_HDR&#39;]: RGB+SD Blended HDR frame data, 3*320*640, t=t_0+i*T ms</span>
+<span class="sd">                - sample[&#39;Fi&#39;]: preprocessed frame data, 3*320*640, t=t_0+i*T ms</span>
+<span class="sd">            - AOP</span>
+<span class="sd">                - AOP data is stored in a large tensor, [T,C,H,W]</span>
+<span class="sd">                - channel 0 is TD, channel 1 is SDL, channel 2 is SDR</span>
+<span class="sd">                - sample[&#39;tsdiff&#39;] = TSD data upsample to (N+1)*3*320*640, from t=t_0 to t=t+ N*T ms (eg. T=33 in 757 @ 8 bit  mode)</span>
+<span class="sd">                - sample[&#39;rawDiff&#39;]: raw TSD data, (N+1)*3*160*160, from t=t_0 to t=t+ N*T ms (eg. T=33 in 757 @ 8 bit  mode)</span>
+<span class="sd">                - all tianmoucv API use sample[&#39;rawDiff&#39;] for input, sample[&#39;tsdiff&#39;] is used by some NN-based method</span>
+<span class="sd">            - sample[&#39;meta&#39;]: </span>
+<span class="sd">                - a dict</span>
+<span class="sd">                - file path infomation </span>
+<span class="sd">                - camera timestamps for each data</span>
+<span class="sd">                - more other details</span>
+<span class="sd">            - sample[&#39;labels&#39;]: </span>
+<span class="sd">                - list of labels, if you have one</span>
+<span class="sd">            - sample[&#39;sysTimeStamp&#39;]: unix system time stamp in us, use for multi-sensor sync, -1 if not supported</span>
+<span class="sd">                - you can calculate Δt = sysTimeStamp1-sysTimeStamp2, unit is &#39;us&#39;</span>
+<span class="sd">        &#39;&#39;&#39;</span>       
+        <span class="n">sample</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+        <span class="n">metaInfo</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([])</span>
+        <span class="n">legalSample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">conefilename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="c1"># only read first one, if you want to use dual camera you can read it again</span>
+        <span class="n">rodfilename</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>  <span class="c1"># only read first one, if you want to use dual camera you can read it again</span>
+        <span class="n">coneAddrs</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">rodAddrs</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        
+        <span class="n">rgb_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">coneTimeStamp_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">raw_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1">#read all rgb frames</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1">#print(&#39;caddr:&#39;,coneAddrs[i])</span>
+            <span class="n">frame</span><span class="p">,</span><span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readConeFast</span><span class="p">(</span><span class="n">conefilename</span><span class="p">,</span><span class="n">coneAddrs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">frame_raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cone_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cone_width</span><span class="p">))</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),(</span><span class="bp">self</span><span class="o">.</span><span class="n">cone_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">cone_width</span><span class="p">))</span>
+            <span class="n">raw_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame_raw</span><span class="p">)</span>
+            <span class="n">rgb_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+            <span class="n">coneTimeStamp_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">timestamp</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span>
+
+        <span class="n">cone_id</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;coneid&#39;</span><span class="p">]</span>
+        <span class="n">rod_id</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;rodid&#39;</span><span class="p">]</span>
+
+        <span class="c1">#prepare all meta infomation</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;C_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conefilename</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;C_timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coneTimeStamp_list</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;C_idx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cone_id</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rodfilename</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_idx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rod_id</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;sample_length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">])</span>
+        <span class="n">itter</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rodAddrs</span><span class="p">)</span>
+
+        <span class="c1">#read all aop frames</span>
+        <span class="n">tsd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="n">itter</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span><span class="p">])</span>
+
+        <span class="n">tsd</span><span class="p">,</span> <span class="n">rodTimeStamp</span> <span class="o">=</span> <span class="n">multiple_rods_tmdat_to_npy_from_addr</span><span class="p">(</span><span class="n">rodfilename</span><span class="p">,</span> <span class="n">addr</span> <span class="o">=</span> <span class="n">rodAddrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">,</span><span class="n">length</span><span class="o">=</span><span class="n">itter</span><span class="p">,</span><span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">tsd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">tsd</span><span class="p">)</span>
+        <span class="n">metaInfo</span><span class="p">[</span><span class="s1">&#39;R_timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rodTimeStamp</span>
+
+        <span class="c1">#metaInfo[&#39;R_timestamp&#39;] = []</span>
+        <span class="c1">#for i in range(itter):</span>
+        <span class="c1">#    startAddr = rodAddrs[i]</span>
+        <span class="c1">#    sdl,sdr,td,rodTimeStamp = self.readRodFast(rodfilename,startAddr)</span>
+        <span class="c1">#    tsd[0,i,:,:] = torch.Tensor(td.astype(np.float32)).view(self.rod_height,self.rod_width)</span>
+        <span class="c1">#    tsd[1,i,:,:] = torch.Tensor(sdl.astype(np.float32)).view(self.rod_height,self.rod_width)</span>
+        <span class="c1">#    tsd[2,i,:,:] = torch.Tensor(sdr.astype(np.float32)).view(self.rod_height,self.rod_width)</span>
+        <span class="c1">#    metaInfo[&#39;R_timestamp&#39;].append(rodTimeStamp.astype(np.int64))</span>
+
+        <span class="c1">#denoising</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise</span><span class="p">:</span>
+            <span class="n">tsd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">denoise</span><span class="p">(</span><span class="n">tsd</span><span class="p">,</span> <span class="n">rod_id</span><span class="p">,</span> 
+                                    <span class="n">TD_dark</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;TD&#39;</span><span class="p">],</span>
+                                    <span class="n">SD_dark_left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDL&#39;</span><span class="p">],</span> 
+                                    <span class="n">SD_dark_right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDR&#39;</span><span class="p">],</span> 
+                                    <span class="n">denoise_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">denoise_function</span><span class="p">,</span>
+                                    <span class="n">denoise_function_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">denoise_function_args</span><span class="p">)</span>
+
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;rawDiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsd</span>
+        <span class="n">mingap</span> <span class="o">=</span> <span class="p">(</span><span class="n">itter</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span>
+        <span class="k">if</span> <span class="n">needPreProcess</span><span class="p">:</span>
+            <span class="n">tsd_expand_original</span><span class="p">,</span><span class="n">txydiff_expand</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tsd_preprocess</span><span class="p">(</span><span class="n">tsd</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_correct_sd_upsampler</span><span class="p">:</span>
+                <span class="n">txydiff_resized</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">txydiff_expand</span><span class="p">,(</span><span class="mi">320</span><span class="p">,</span><span class="mi">640</span><span class="p">),</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">)</span>
+                <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;txydiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">txydiff_resized</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tsdiff_resized</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">tsd_expand_original</span><span class="p">,(</span><span class="mi">320</span><span class="p">,</span><span class="mi">640</span><span class="p">),</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;bilinear&#39;</span><span class="p">)</span>
+                <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;tsdiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tsdiff_resized</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span> 
+                <span class="n">frame</span><span class="p">,</span><span class="n">frame_without_isp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgb_preprocess</span><span class="p">(</span><span class="n">rgb_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">frame_raw</span> <span class="o">=</span> <span class="n">raw_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;_without_isp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame_without_isp</span>
+                <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">frame</span>
+                <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_raw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame_raw</span>
+                <span class="n">SD_t</span> <span class="o">=</span> <span class="n">tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span><span class="n">mingap</span><span class="o">*</span><span class="n">i</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+                <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;_HDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">HDRRecon</span><span class="p">(</span><span class="n">SD_t</span> <span class="o">/</span> <span class="mi">128</span><span class="p">,</span><span class="n">frame</span><span class="p">)</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metaInfo</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;sysTimeStamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;sysTimeStamp&#39;</span><span class="p">]</span>
+        <span class="n">dataRatio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;dataRatio&#39;</span><span class="p">]</span>
+        <span class="n">sample</span><span class="p">[</span><span class="s1">&#39;dataRatio&#39;</span><span class="p">]</span><span class="o">=</span> <span class="n">dataRatio</span>
+
+        <span class="c1">#convert all numpy type to tensor</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;F&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="n">sample</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sample</span></div>
+
+    
+    <span class="k">def</span> <span class="nf">tsd_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">tsdiff</span><span class="p">):</span>
+        <span class="c1">#upsample_cross_conv: 老算法</span>
+        <span class="n">tsd_expand_original</span> <span class="o">=</span> <span class="n">upsample_cross_conv</span><span class="p">(</span><span class="n">tsdiff</span><span class="p">)</span><span class="o">/</span><span class="mf">128.0</span>   
+        
+        <span class="n">Ix</span><span class="p">,</span><span class="n">Iy</span><span class="o">=</span> <span class="p">(</span><span class="n">e</span><span class="o">/</span><span class="mf">128.0</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">SD2XY</span><span class="p">(</span><span class="n">tsdiff</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span><span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)))</span>
+        <span class="n">TXYD</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">tsd_expand_original</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="o">...</span><span class="p">],</span><span class="n">Ix</span><span class="p">,</span><span class="n">Iy</span><span class="p">],</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tsd_expand_original</span><span class="p">,</span><span class="n">TXYD</span>
+
+    <span class="k">def</span> <span class="nf">rgb_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">F_raw</span><span class="p">):</span>
+        <span class="n">F</span><span class="p">,</span><span class="n">F_without_isp</span> <span class="o">=</span> <span class="n">default_rgb_isp</span><span class="p">(</span><span class="n">F_raw</span><span class="p">,</span><span class="n">blc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">blc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">F</span><span class="p">,</span><span class="n">F_without_isp</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        定位在哪个sample里</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__len__</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader ERROR] INDEX OUT OF RANGE!&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>     
+        <span class="n">key</span><span class="p">,</span><span class="n">relativeIndex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locateSample</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader ERROR] No data Found for this key!&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>   
+        <span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">packRead</span><span class="p">(</span><span class="n">relativeIndex</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_data_parser</span><span class="p">:</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="n">TianmoucDataSampleParser</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sample</span>
+
+    <span class="c1">##################################################################################################################################</span>
+    <span class="c1">#&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;[暗噪声标定]&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span>
+    <span class="c1">###################################################################################################################################</span>
+
+<div class="viewcode-block" id="TianmoucDataReader.get_dark_noise">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader.get_dark_noise">[文档]</a>
+    <span class="k">def</span> <span class="nf">get_dark_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        inspect dark noise or calibrate dark noise data</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span></div>
+
+        
+<div class="viewcode-block" id="TianmoucDataReader.choose_correct_fpn">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader.choose_correct_fpn">[文档]</a>
+    <span class="k">def</span> <span class="nf">choose_correct_fpn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">thr_fpn</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        空间噪声</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">TD_dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;TD&#39;</span><span class="p">]</span>
+        <span class="n">SDL_dark</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDL&#39;</span><span class="p">]</span>
+        <span class="n">SDR_dark</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDR&#39;</span><span class="p">]</span>
+        <span class="n">tsdiff</span><span class="p">,</span><span class="n">rodid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_tsdiff_</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="n">dataRatio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;dataRatio&#39;</span><span class="p">]</span>
+
+        <span class="c1">#判断奇偶帧匹配</span>
+        <span class="n">cal</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+        <span class="n">cal_0</span> <span class="o">=</span> <span class="n">cal</span> <span class="o">-</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">cal_1</span> <span class="o">=</span> <span class="n">cal</span> <span class="o">-</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">var_org</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">cal</span><span class="p">)</span>
+        <span class="n">var_cal0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">cal_0</span><span class="p">)</span>
+        <span class="n">var_cal1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">cal_1</span><span class="p">)</span>
+    
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">9.0</span>
+    
+        <span class="n">match_tensor_0</span> <span class="o">=</span> <span class="n">cal_0</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">smoothed_matrix</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">match_tensor_0</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">smoothed_matrix</span> <span class="o">=</span> <span class="n">smoothed_matrix</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">mask_0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">smoothed_matrix</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">thr_fpn</span>
+    
+        <span class="n">match_tensor_1</span> <span class="o">=</span> <span class="n">cal_1</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">smoothed_matrix</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">match_tensor_1</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">smoothed_matrix</span> <span class="o">=</span> <span class="n">smoothed_matrix</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">mask_1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">smoothed_matrix</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">thr_fpn</span>
+        <span class="n">mask_0</span> <span class="o">=</span> <span class="n">mask_0</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">mask_1</span> <span class="o">=</span> <span class="n">mask_1</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+        <span class="n">var_0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">mask_0</span><span class="p">)</span>  <span class="c1">#dark0和tsdiff0的匹配</span>
+        <span class="n">var_1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">mask_1</span><span class="p">)</span>  <span class="c1">#dark1和tsdiff1的匹配</span>
+  
+        <span class="n">TD_corrected_dark</span> <span class="o">=</span>  <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">SDL_corrected_dark</span> <span class="o">=</span>  <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dataRatio</span><span class="p">)]</span>
+        <span class="n">SDR_corrected_dark</span> <span class="o">=</span>  <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dataRatio</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">SDL_dark</span><span class="p">)</span> <span class="o">&lt;</span>  <span class="mi">2</span><span class="o">*</span><span class="n">dataRatio</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader Warning] Dark Noise data</span><span class="se">\&#39;</span><span class="s1">s dataRatio does not match the data,use average-copy version(无法去横条纹)&#39;</span><span class="p">)</span>
+            <span class="n">SDL_dark</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">SDL_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">SDL_dark</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">SDL_dark</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">SDL_dark</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">:],</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
+            <span class="n">SDL_dark</span> <span class="o">=</span> <span class="p">[</span><span class="n">SDL_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="n">dataRatio</span> <span class="o">+</span> <span class="p">[</span><span class="n">SDL_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">*</span><span class="n">dataRatio</span>
+            <span class="n">SDR_dark</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">SDR_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">SDR_dark</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">],</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">SDR_dark</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">SDR_dark</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">:],</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
+            <span class="n">SDR_dark</span> <span class="o">=</span> <span class="p">[</span><span class="n">SDR_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="n">dataRatio</span> <span class="o">+</span> <span class="p">[</span><span class="n">SDR_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">*</span><span class="n">dataRatio</span>
+            
+        <span class="c1">#如果第一帧是偶数帧，并且第一帧更适配[0]</span>
+        <span class="c1">#或者第一帧是偶数帧，并且第一帧更适配[1]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">var_cal0</span> <span class="o">&lt;</span> <span class="n">var_cal1</span> <span class="ow">and</span> <span class="n">rodid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">var_cal0</span> <span class="o">&gt;</span> <span class="n">var_cal1</span> <span class="ow">and</span> <span class="n">rodid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">TD_corrected_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">TD_corrected_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataRatio</span><span class="p">):</span>
+                <span class="n">SDL_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDL_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> 
+                <span class="n">SDL_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDL_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> 
+                <span class="n">SDR_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDR_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> 
+                <span class="n">SDR_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDR_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> 
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">TD_corrected_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">TD_corrected_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataRatio</span><span class="p">):</span>
+                <span class="n">SDL_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDL_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> 
+                <span class="n">SDL_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDL_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> 
+                <span class="n">SDR_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDR_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> 
+                <span class="n">SDR_corrected_dark</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDR_dark</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> 
+
+        <span class="c1">#已经换好顺序的fpn-dark</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;TD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TD_corrected_dark</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDL_corrected_dark</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aop_denoise_args</span><span class="o">.</span><span class="n">aop_dark_dict</span><span class="p">[</span><span class="s1">&#39;SDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDR_corrected_dark</span>
+
+        <span class="k">return</span> <span class="n">TD_corrected_dark</span><span class="p">,</span> <span class="n">SDL_corrected_dark</span><span class="p">,</span> <span class="n">SDR_corrected_dark</span></div>
+
+        
+
+<div class="viewcode-block" id="TianmoucDataReader.get_raw_tsdiff_">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader.get_raw_tsdiff_">[文档]</a>
+    <span class="k">def</span> <span class="nf">get_raw_tsdiff_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        只拿原始rod数据和其绝对id，提升效率</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__len__</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader ERROR] INDEX OUT OF RANGE!&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>     
+        <span class="n">key</span><span class="p">,</span><span class="n">relativeIndex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locateSample</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader ERROR] No data Found for this key!&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>   
+        <span class="n">legalSample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;legalData&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">rodfilename</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>  <span class="c1"># only read first one, if you want to use dual camera you can read it again</span>
+        <span class="n">rodAddrs</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pathways</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">rod_id</span> <span class="o">=</span> <span class="n">legalSample</span><span class="p">[</span><span class="s1">&#39;rodid&#39;</span><span class="p">]</span>
+        <span class="n">itter</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rodAddrs</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">itter</span><span class="o">&gt;=</span><span class="mi">0</span>
+        <span class="n">tsd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="n">itter</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">itter</span><span class="p">):</span>
+            <span class="n">startAddr</span> <span class="o">=</span> <span class="n">rodAddrs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">sdl</span><span class="p">,</span><span class="n">sdr</span><span class="p">,</span><span class="n">td</span><span class="p">,</span><span class="n">rodTimeStamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readRodFast</span><span class="p">(</span><span class="n">rodfilename</span><span class="p">,</span><span class="n">startAddr</span><span class="p">)</span>
+            <span class="n">tsd</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">td</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span><span class="p">)</span>
+            <span class="n">tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">sdl</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span><span class="p">)</span>
+            <span class="n">tsd</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">,:,:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">sdr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rod_width</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tsd</span><span class="p">,</span><span class="n">rod_id</span></div>
+
+        
+<div class="viewcode-block" id="TianmoucDataReader.td_fpn_calibration_">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader.td_fpn_calibration_">[文档]</a>
+    <span class="k">def</span> <span class="nf">td_fpn_calibration_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Num</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        计算奇数帧和偶数帧TD空间噪声，Num为标定所用的index数量</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">tsdiff_</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_tsdiff_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">tsdiff</span> <span class="o">=</span> <span class="n">tsdiff_</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="n">dataRatio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;dataRatio&#39;</span><span class="p">]</span>
+                    
+        <span class="n">TD_mean</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">TD_mean_odd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span>
+        <span class="n">TD_mean_even</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span>
+
+        <span class="n">odd_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">even_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Num</span><span class="p">):</span>
+            <span class="n">tsdiff_</span><span class="p">,</span><span class="n">rod_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_tsdiff_</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="c1">#print(&#39;[&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;debug&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;]&#39;,rod_id)</span>
+            <span class="k">if</span> <span class="n">tsdiff_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tsdiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dataRatio</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader warninig] td_fpn_calibration_ lost data&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">tsdiff</span> <span class="o">=</span> <span class="n">tsdiff_</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataRatio</span><span class="p">):</span>
+                <span class="n">TD_0</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">rod_id</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span><span class="c1">#偶数rod帧</span>
+                    <span class="n">TD_mean_even</span> <span class="o">+=</span> <span class="n">TD_0</span>
+                    <span class="n">even_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">rod_id</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span><span class="c1">#偶数rod帧</span>
+                    <span class="n">TD_mean_odd</span> <span class="o">+=</span> <span class="n">TD_0</span>
+                    <span class="n">odd_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+        <span class="n">TD_mean_even</span><span class="o">/=</span> <span class="p">(</span><span class="n">even_count</span><span class="o">+</span><span class="mf">1e-10</span><span class="p">)</span>
+        <span class="n">TD_mean_odd</span><span class="o">/=</span> <span class="p">(</span><span class="n">odd_count</span><span class="o">+</span><span class="mf">1e-10</span><span class="p">)</span>
+        <span class="n">TD_mean_odd</span> <span class="o">=</span> <span class="n">custom_round</span><span class="p">(</span><span class="n">TD_mean_odd</span><span class="p">)</span>
+        <span class="n">TD_mean_even</span> <span class="o">=</span> <span class="n">custom_round</span><span class="p">(</span><span class="n">TD_mean_even</span><span class="p">)</span>
+        
+        <span class="n">TD_mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">TD_mean_even</span>
+        <span class="n">TD_mean</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="n">TD_mean_odd</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader] TD CALIB NUM:&#39;</span><span class="p">,</span><span class="n">odd_count</span><span class="p">,</span><span class="n">even_count</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">TD_mean</span></div>
+
+
+<div class="viewcode-block" id="TianmoucDataReader.sd_fpn_calibration_">
+<a class="viewcode-back" href="../../../tianmoucv/introduction.html#tianmoucv.data.tianmoucData.TianmoucDataReader.sd_fpn_calibration_">[文档]</a>
+    <span class="k">def</span> <span class="nf">sd_fpn_calibration_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Num</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        计算奇数index帧和偶数index帧TD空间噪声，Num为标定所用的index数量</span>
+<span class="sd">        返回标定的SD_mean_left, SD_mean_right</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">tsdiff_</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_tsdiff_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">tsdiff</span> <span class="o">=</span> <span class="n">tsdiff_</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="n">dataRatio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;dataRatio&#39;</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader warninig] use data ratio of the last key, if want to support multiple matkey, it may need to be modified&#39;</span><span class="p">)</span>
+            
+        <span class="n">odd_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">even_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">SD_mean_left</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dataRatio</span><span class="p">)]</span>
+        <span class="n">SD_mean_right</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">dataRatio</span><span class="p">)]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Num</span><span class="p">):</span>
+            <span class="n">tsdiff_</span><span class="p">,</span><span class="n">rod_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_tsdiff_</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tsdiff_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tsdiff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dataRatio</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader warninig] sd_fpn_calibration_ lost data&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">tsdiff</span> <span class="o">=</span> <span class="n">tsdiff_</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">rod_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span><span class="c1">#偶数rod帧,考虑条纹噪声</span>
+                <span class="n">even_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataRatio</span><span class="p">):</span>
+                    <span class="n">SDL</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+                    <span class="n">SDR</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+                    <span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">SDL</span>
+                    <span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">SDR</span>
+            <span class="k">else</span><span class="p">:</span><span class="c1">#偶数rod帧,考虑条纹噪声</span>
+                <span class="n">odd_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataRatio</span><span class="p">):</span>
+                    <span class="n">SDL</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+                    <span class="n">SDR</span> <span class="o">=</span> <span class="n">tsdiff</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+                    <span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">+=</span> <span class="n">SDL</span>
+                    <span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">+=</span> <span class="n">SDR</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dataRatio</span><span class="p">):</span>
+            <span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">even_count</span><span class="o">+</span><span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_round</span><span class="p">(</span><span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+            <span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">even_count</span><span class="o">+</span><span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_round</span><span class="p">(</span><span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+            <span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">odd_count</span><span class="o">+</span><span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_round</span><span class="p">(</span><span class="n">SD_mean_left</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">])</span>
+            <span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">odd_count</span><span class="o">+</span><span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_round</span><span class="p">(</span><span class="n">SD_mean_right</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">])</span>   
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;[tianmoucv Datareader] SD CALIB NUM:&#39;</span><span class="p">,</span><span class="n">odd_count</span><span class="p">,</span><span class="n">even_count</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SD_mean_left</span><span class="p">,</span> <span class="n">SD_mean_right</span></div>
+
+
+
+    <span class="k">def</span> <span class="nf">denoise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_tsd</span><span class="p">,</span> <span class="n">rod_id</span><span class="p">,</span> <span class="n">TD_dark</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">SD_dark_left</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">SD_dark_right</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">denoise_function</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">denoise_function_args</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+
+        <span class="n">denoise_raw_tsd</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">raw_tsd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">:</span>
+            <span class="n">dataRatio</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileDict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;dataRatio&#39;</span><span class="p">]</span>
+
+        <span class="c1">#BLC</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">raw_tsd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">rod_id</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">raw_tsd</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-=</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_tsd</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-=</span> <span class="n">TD_dark</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">rod_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">raw_tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-=</span> <span class="n">SD_dark_left</span><span class="p">[</span><span class="n">j</span><span class="o">%</span><span class="n">dataRatio</span><span class="p">]</span>
+                <span class="n">raw_tsd</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-=</span> <span class="n">SD_dark_right</span><span class="p">[</span><span class="n">j</span><span class="o">%</span><span class="n">dataRatio</span><span class="p">]</span>    
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_tsd</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-=</span> <span class="n">SD_dark_left</span><span class="p">[</span><span class="n">j</span><span class="o">%</span><span class="n">dataRatio</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span>
+                <span class="n">raw_tsd</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">-=</span> <span class="n">SD_dark_right</span><span class="p">[</span><span class="n">j</span><span class="o">%</span><span class="n">dataRatio</span><span class="o">+</span><span class="n">dataRatio</span><span class="p">]</span>
+                    
+            <span class="c1">#TD只去除空间噪声</span>
+            <span class="n">denoise_raw_tsd</span><span class="p">[:,</span> <span class="n">j</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span><span class="o">=</span><span class="n">raw_tsd</span><span class="p">[:,</span><span class="n">j</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+
+        <span class="c1">#optional</span>
+        <span class="k">if</span> <span class="n">denoise_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">denoise_raw_tsd</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">denoise_function</span><span class="p">(</span><span class="n">raw_tsd</span><span class="p">,</span><span class="n">denoise_function_args</span><span class="p">)</span></div>
+
+
+
+    <span class="c1">##################################################################################################################################</span>
+    <span class="c1">#&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;[暗噪声标定]&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span>
+    <span class="c1">###################################################################################################################################</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2026, Yihan Lin。</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
