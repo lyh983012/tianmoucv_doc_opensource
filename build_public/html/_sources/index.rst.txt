@@ -36,6 +36,7 @@ DEMO视频示例
     :caption: Outline
 
     /tianmoucv/introduction
+    仿真器分析报告 <Tianmouc_Simulator_Analysis.html>
 
     
    
@@ -68,7 +69,7 @@ Python视觉工具包TianmoucV
     pip install tianmoucv -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 
-TianmoucV文档见 :doc:`/tianmoucv/introduction`，安装中遇到的问题以及可能需要的资料请查阅 :doc:`/QA/introduction` 
+TianmoucV文档见 :doc:`/tianmoucv/introduction`，仿真器分析报告见 `仿真器分析报告 <Tianmouc_Simulator_Analysis.html>`_，安装中遇到的问题以及可能需要的资料请查阅 :doc:`/QA/introduction` 
 
 
 2. 数据集
@@ -192,7 +193,7 @@ Public version is 0.3.2, development version in testing
     pip install tianmoucv -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 
-Documents can be found at :doc:`/tianmoucv/introduction`，Problems encountered during installation and information that may be required can be found at :doc:`/QA/introduction` 
+Documents can be found at :doc:`/tianmoucv/introduction`, simulator analysis report at `Simulator Analysis Report <Tianmouc_Simulator_Analysis.html>`_. Problems encountered during installation and information that may be required can be found at :doc:`/QA/introduction` 
 
 
 2. Dataset

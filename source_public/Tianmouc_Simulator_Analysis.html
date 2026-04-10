@@ -1,0 +1,1038 @@
+<!DOCTYPE html><html><head>
+      <title>Tianmouc_Simulator_Analysis</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:////Users/lyh/.vscode/extensions/shd101wyy.markdown-preview-enhanced-0.8.11/crossnote/dependencies/katex/katex.min.css">
+      
+      
+      <script type="text/javascript" src="file:////Users/lyh/.vscode/extensions/shd101wyy.markdown-preview-enhanced-0.8.11/crossnote/dependencies/mermaid/mermaid.min.js" charset="UTF-8"></script>
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+    <div style="background-color: #f8f9fa; padding: 15px; border-bottom: 1px solid #dee2e6; margin-bottom: 20px; font-family: sans-serif;">
+        <a href="index.html" style="text-decoration: none; color: #2980b9; font-weight: bold;">← 返回主页 (Back to Home)</a>
+    </div>
+    
+    
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="天眸传感器仿真器-sim-详细分析报告">天眸传感器仿真器 (sim) 详细分析报告 </h1>
+<h2 id="目录">目录 </h2>
+<ol>
+<li><a href="#1-%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#2-%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84">整体架构</a></li>
+<li><a href="#3-%E6%A8%A1%E5%9D%97%E8%AF%A6%E7%BB%86%E5%88%86%E6%9E%90">模块详细分析</a></li>
+<li><a href="#4-%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B">数据流程</a></li>
+<li><a href="#5-%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F">输入输出格式</a></li>
+<li><a href="#6-%E7%A1%AC%E4%BB%B6%E5%AF%B9%E5%BA%94%E5%85%B3%E7%B3%BB">硬件对应关系</a></li>
+<li><a href="#7-%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B">使用示例</a></li>
+</ol>
+<hr>
+<h2 id="1-概述">1. 概述 </h2>
+<h3 id="11-项目背景">1.1 项目背景 </h3>
+<p><strong>TianmouCV</strong> 是<strong>天眸(Tianmouc)互补视觉传感器的官方算法库。天眸是全球首款</strong>多通路仿生视觉传感器，具有以下特点：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最高帧率</td>
+<td><strong>10000 fps</strong></td>
+</tr>
+<tr>
+<td>动态范围</td>
+<td><strong>130 dB</strong></td>
+</tr>
+<tr>
+<td>带宽压缩</td>
+<td><strong>90%</strong> (相比传统高速相机)</td>
+</tr>
+<tr>
+<td>灵敏度</td>
+<td>72%@530nm (可见光)</td>
+</tr>
+<tr>
+<td>数据模态</td>
+<td>3种：RGB + 时间差分TD + 空间差分SD</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-仿真器用途">1.2 仿真器用途 </h3>
+<p><code>sim/</code> 模块是天眸传感器的<strong>软件仿真器</strong>，主要用途：</p>
+<ul>
+<li>✅ 在没有真实硬件的情况下生成仿真天眸数据</li>
+<li>✅ 用于算法开发和测试（重建、光流、分割等）</li>
+<li>✅ 生成大规模训练数据用于深度学习</li>
+<li>✅ 验证传感器设计的正确性</li>
+</ul>
+<h3 id="13-文件结构">1.3 文件结构 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text text"><code>sim/
+├── __init__.py              # 导出接口
+├── simpleSim_params.json   # 仿真参数配置
+├── simple_tmc_sim.py       # 简单版：单图像仿真
+└── simple_tmc_sim_advance.py # 高级版：序列仿真，完整噪声模拟
+</code></pre><hr>
+<h2 id="2-整体架构">2. 整体架构 </h2>
+<h3 id="21-整体流程图">2.1 整体流程图 </h3>
+<div class="mermaid">flowchart TD
+    A[输入: RGB图像序列] --&gt; B[参数采样&lt;br/&gt;阈值/噪声/扰动]
+    B --&gt; C[预处理&lt;br/&gt;尺寸调整 + 灰度化]
+    C --&gt; D[ROD分簇下采样&lt;br/&gt;2×2合并]
+    D --&gt; E[光子噪声&lt;br/&gt;泊松分布]
+    E --&gt; F[读出噪声&lt;br/&gt;高斯分布]
+    F --&gt; G[FIFO缓冲区&lt;br/&gt;存储前一帧]
+    G --&gt; H[差分计算&lt;br/&gt;TD时间差分 + SD空间差分]
+    H --&gt; I[FPN注入&lt;br/&gt;奇/偶帧不同固定噪声]
+    I --&gt; J[额外噪声&lt;br/&gt;固定噪声 + Skellam随机噪声]
+    J --&gt; K[阈值量化&lt;br/&gt;比较器 + ADC编码]
+    K --&gt; L[输出&lt;br/&gt;TD + SDL + SDR]
+    L --&gt; M[保存/可视化]
+    
+    style A fill:#E1F5FE
+    style M fill:#E8F5E9
+</div><h3 id="22-传感器架构示意">2.2 传感器架构示意 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text text"><code>┌─────────────────────────────────────────────────────┐
+│ 天眸传感器像素阵列                                   │
+│                                                     │
+│  ┌──────┐┌──────┐┌──────┐┌──────┐                   │
+│  │ Cone││ Cone││ Cone││ Cone│  ←  RGB输出(低帧率)   │
+│  └──────┘└──────┘└──────┘└──────┘                   │
+│           ┌──────┐┌──────┐                          │
+│           │ Rod  ││ Rod  │  ←  TSD输出(高帧率)      │
+│           └──────┘└──────┘                          │
+└─────────────────────────────────────────────────────┘
+
+Rod工作方式：每个Rod接收2×2像素 → 输出差分数据
+</code></pre><h3 id="23-rod分簇下采样示意">2.3 ROD分簇下采样示意 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text text"><code>原始图像 (H × W)
+┌───┬───┬───┬───┐
+│a11│a12│a13│a14│
+├───┼───┼───┼───┤
+│a21│a22│a23│a24│  ← 每个2×2块合并为一个rod像素
+├───┼───┼───┼───┤
+│a31│a32│a33│a34│
+├───┼───┼───┼───┤
+│a41│a42│a43│a44│
+└───┴───┴───┴───┘
+          ↓
+ROD输出 (H/2 × W/4)
+┌─────────┬─────────┐
+│ (a11+a12│         │
+│  a21+a22)/4        │
+└─────────┴─────────┘
+</code></pre><hr>
+<h2 id="3-模块详细分析">3. 模块详细分析 </h2>
+<h3 id="31-参数配置模块">3.1 参数配置模块 </h3>
+<p><strong>文件</strong>: <a href="../tianmoucv/tianmoucv/sim/simpleSim_params.json">simpleSim_params.json</a></p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>默认值</th>
+<th>说明</th>
+<th>仿真硬件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>adc_bit_prec</code></td>
+<td>8</td>
+<td>ADC量化精度</td>
+<td><strong>模数转换器</strong></td>
+</tr>
+<tr>
+<td><code>dark_fpn_stat.td_odd_mean</code></td>
+<td>0.12</td>
+<td>TD奇帧固定噪声均值</td>
+<td><strong>固定模式噪声</strong></td>
+</tr>
+<tr>
+<td><code>dark_fpn_stat.td_odd_std</code></td>
+<td>0.75</td>
+<td>TD奇帧固定噪声标准差</td>
+<td>工艺不均匀性</td>
+</tr>
+<tr>
+<td><code>dark_fpn_stat.td_even_mean</code></td>
+<td>0.32</td>
+<td>TD偶帧固定噪声均值</td>
+<td><br></td>
+</tr>
+<tr>
+<td><code>dark_fpn_stat.td_even_std</code></td>
+<td>0.64</td>
+<td>TD偶帧固定噪声标准差</td>
+<td><br></td>
+</tr>
+<tr>
+<td><code>sensor_fixed_noise_prob</code></td>
+<td>0.0</td>
+<td>额外固定噪声概率</td>
+<td><strong>坏点/列噪声</strong></td>
+</tr>
+<tr>
+<td><code>sensor_random_noise_prob</code></td>
+<td>0.0</td>
+<td>随机噪声概率</td>
+<td><strong>电路随机噪声</strong></td>
+</tr>
+<tr>
+<td><code>sensor_poisson_lambda</code></td>
+<td>4</td>
+<td>泊松噪声参数</td>
+<td><strong>光子散粒噪声</strong></td>
+</tr>
+<tr>
+<td><code>gray_weight_jitter</code></td>
+<td>0.0</td>
+<td>灰度权重抖动</td>
+<td><strong>光照变化</strong></td>
+</tr>
+<tr>
+<td><code>sim_threshold_range</code></td>
+<td>[0.005, 0.02]</td>
+<td>差分阈值范围</td>
+<td><strong>比较器阈值</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-预处理模块">3.2 预处理模块 </h3>
+<p><strong>功能</strong>:</p>
+<ol>
+<li>将输入图像resize到目标尺寸</li>
+<li>转换为灰度图</li>
+<li>添加灰度权重扰动（可选，模拟光照变化）</li>
+</ol>
+<p><strong>代码位置</strong>: <a href="../tianmoucv/tianmoucv/sim/simple_tmc_sim_advance.py#L165-L185">simple_tmc_sim_advance.py:165-185</a></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># 灰度化公式</span>
+gray_weights <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.299</span><span class="token punctuation">,</span> <span class="token number">0.587</span><span class="token punctuation">,</span> <span class="token number">0.114</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+img_gray <span class="token operator">=</span> np<span class="token punctuation">.</span>tensordot<span class="token punctuation">(</span>img_rgb<span class="token punctuation">,</span> gray_weights<span class="token punctuation">,</span> axes<span class="token operator">=</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre><p><strong>数据变换</strong>:</p>
+<ul>
+<li>输入: <code>[H, W, 3]</code> uint8 BGR</li>
+<li>输出: <code>[rod_height, rod_width]</code> float32 (0.0-1.0)</li>
+</ul>
+<p><strong>仿真硬件</strong>: <strong>Rod光敏单元</strong> → Rod只对亮度敏感，不需要色彩信息</p>
+<h3 id="33-rod分簇下采样模块">3.3 ROD分簇下采样模块 </h3>
+<p><strong>功能</strong>: 模拟真实传感器的ROD阵列结构，将2×2像素合并为一个rod像素</p>
+<p><strong>代码位置</strong>: <a href="../tianmoucv/tianmoucv/sim/simple_tmc_sim_advance.py#L284-L291">simple_tmc_sim_advance.py:284-291</a></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># 2×2像素平均合并</span>
+etron_img_bin <span class="token operator">=</span> <span class="token punctuation">(</span>img_diff_sim<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">+</span> 
+                 img_diff_sim<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">+</span> 
+                 img_diff_sim<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">+</span> 
+                 img_diff_sim<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">4</span>
+
+<span class="token comment"># 交错排列</span>
+etron_img_rod<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> etron_img_bin<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span>
+etron_img_rod<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> etron_img_bin<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span>
+</code></pre><p><strong>尺寸变换</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>输入</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>高度: <code>sensor_height</code></td>
+<td>高度: <code>sensor_height // 2</code></td>
+</tr>
+<tr>
+<td>宽度: <code>sensor_width</code></td>
+<td>宽度: <code>sensor_width // 4</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>示例</strong>:</p>
+<ul>
+<li>输入: 640 × 320</li>
+<li>输出: 160 × 160 <strong>(面积缩小为1/4)</strong></li>
+</ul>
+<p><strong>仿真硬件</strong>: <strong>ROD (Receptive-Field Organized Detector) 阵列</strong> → 合并像素提高灵敏度，降低带宽</p>
+<h3 id="34-噪声模拟模块">3.4 噪声模拟模块 </h3>
+<h4 id="341-光子散粒噪声">3.4.1 光子散粒噪声 </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>img_gray_tensor <span class="token operator">=</span> torch<span class="token punctuation">.</span>poisson<span class="token punctuation">(</span>img_gray_tensor<span class="token punctuation">)</span>
+</code></pre><p><strong>仿真硬件</strong>: <strong>光子量子特性</strong> → 光子到达服从泊松分布</p>
+<h4 id="342-读出噪声">3.4.2 读出噪声 </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>etron_img_rod <span class="token operator">=</span> etron_img_rod <span class="token operator">+</span> torch<span class="token punctuation">.</span>normal<span class="token punctuation">(</span>mean<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> std<span class="token operator">=</span><span class="token number">0.008</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre><p><strong>仿真硬件</strong>: <strong>读出电路热噪声</strong> → 电路电子热扰动</p>
+<h4 id="343-固定模式噪声fpn">3.4.3 固定模式噪声(FPN) </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># 根据奇帧偶帧选择不同噪声</span>
+<span class="token keyword keyword-if">if</span> sim_cnt <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+    td_fpn <span class="token operator">=</span> fpn<span class="token punctuation">[</span><span class="token string">'td_even'</span><span class="token punctuation">]</span>
+    sdl_fpn <span class="token operator">=</span> fpn<span class="token punctuation">[</span><span class="token string">'sdl_even'</span><span class="token punctuation">]</span>
+    sdr_fpn <span class="token operator">=</span> fpn<span class="token punctuation">[</span><span class="token string">'sdr_even'</span><span class="token punctuation">]</span>
+<span class="token keyword keyword-else">else</span><span class="token punctuation">:</span>
+    td_fpn <span class="token operator">=</span> fpn<span class="token punctuation">[</span><span class="token string">'td_odd'</span><span class="token punctuation">]</span>
+    sdl_fpn <span class="token operator">=</span> fpn<span class="token punctuation">[</span><span class="token string">'sdl_odd'</span><span class="token punctuation">]</span>
+    sdr_fpn <span class="token operator">=</span> fpn<span class="token punctuation">[</span><span class="token string">'sdr_odd'</span><span class="token punctuation">]</span>
+
+temp_diff <span class="token operator">+=</span> td_fpn
+</code></pre><p><strong>仿真硬件</strong>: <strong>制造工艺不均匀性</strong> → 每个比较器的固有偏置不同。奇帧偶帧由不同电路读出。</p>
+<h4 id="344-额外随机噪声-skellam分布">3.4.4 额外随机噪声 (Skellam分布) </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>p1 <span class="token operator">=</span> torch<span class="token punctuation">.</span>poisson<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+p2 <span class="token operator">=</span> torch<span class="token punctuation">.</span>poisson<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+skellam_noise <span class="token operator">=</span> <span class="token punctuation">(</span>p1 <span class="token operator">-</span> p2<span class="token punctuation">)</span> <span class="token operator">*</span> scale
+</code></pre><p><strong>Skellam分布</strong> = 两个独立泊松分布之差 → 模拟多个独立噪声源的综合效应</p>
+<h3 id="35-fifo缓冲区">3.5 FIFO缓冲区 </h3>
+<p><strong>功能</strong>: 保持深度为2的缓冲区，存储当前帧和前一帧</p>
+<p><strong>代码位置</strong>: <a href="../tianmoucv/tianmoucv/sim/simple_tmc_sim_advance.py#L35-L45">simple_tmc_sim_advance.py:35-45</a></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-def">def</span> <span class="token function">push_to_fifo</span><span class="token punctuation">(</span>tensor<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword keyword-return">return</span> torch<span class="token punctuation">.</span>cat<span class="token punctuation">(</span><span class="token punctuation">(</span>tensor<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre><p>使用方式:</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>rod_v_buf <span class="token operator">=</span> torch<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span>size<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> rod_height<span class="token punctuation">,</span> rod_width<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+rod_v_buf <span class="token operator">=</span> push_to_fifo<span class="token punctuation">(</span>rod_v_buf<span class="token punctuation">,</span> img_diff_sim<span class="token punctuation">)</span>
+<span class="token comment"># 现在 rod_v_buf[0] = 前一帧, rod_v_buf[1] = 当前帧</span>
+</code></pre><p><strong>仿真硬件</strong>: <strong>行缓存/移位寄存器</strong> → 硬件需要存储前一帧数据来计算差分</p>
+<h3 id="36-差分计算模块">3.6 差分计算模块 </h3>
+<h4 id="361-td---时间差分">3.6.1 TD - 时间差分 </h4>
+<h1 id="362-sd计算空间差分sdl--sdr">3.6.2 SD计算：空间差分（SDL &amp; SDR） </h1>
+<h3 id="3621-功能概述">3.6.2.1 功能概述 </h3>
+<p>SD（Spatial Difference）计算模块负责模拟天眸传感器交错式像素阵列的空间梯度提取逻辑。基于前一帧与当前帧的Rod像素，分别计算SDL（左向空间差分）与SDR（右向空间差分），最终输出与硬件格式完全一致的int8差分图。</p>
+<p>核心作用：提取图像边缘与纹理特征，为后续视觉任务提供高帧率、高压缩率的空间结构信息。</p>
+<p>硬件映射：对应传感器内SDL/SDR专用比较器阵列，处理奇偶行交错布局的像素差分。</p>
+<h3 id="3622-核心差分规则严格对应传感器硬件">3.6.2.2 核心差分规则（严格对应传感器硬件） </h3>
+<p>基于传感器交错行布局（ROD 采样时：奇数行取奇数列，偶数行取偶数列且向左平移 1-pixel），在 <code>sd_cal</code> 矩阵中的垂直和对角操作在物理空间上映射为 <strong>Center - Left</strong> 和 <strong>Center - Right</strong>。</p>
+<h4 id="核心差分定义被减数必为奇数行">核心差分定义（被减数必为奇数行） </h4>
+<table>
+<thead>
+<tr>
+<th>差分类型</th>
+<th>物理含义</th>
+<th>行类型</th>
+<th>差分公式（像素索引 (i,j)）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SDL</td>
+<td><strong>Center - Left</strong></td>
+<td>偶数行（0, 2, 4...）</td>
+<td>SDL[i,j] = Gray[i+1,j] - Gray[i,j]</td>
+<td>Gray[i+1,j] 为奇数行（中心）</td>
+</tr>
+<tr>
+<td><br></td>
+<td><br></td>
+<td>奇数行（1, 3, 5...）</td>
+<td>SDL[i,j] = Gray[i,j] - Gray[i+1,j]</td>
+<td>Gray[i,j] 为奇数行（中心）</td>
+</tr>
+<tr>
+<td>SDR</td>
+<td><strong>Center - Right</strong></td>
+<td>偶数行（0, 2, 4...）</td>
+<td>SDR[i,j] = Gray[i+1,j] - Gray[i,j+1]</td>
+<td>Gray[i+1,j] 为奇数行（中心）</td>
+</tr>
+<tr>
+<td><br></td>
+<td><br></td>
+<td>奇数行（1, 3, 5...）</td>
+<td>SDR[i,j] = Gray[i,j] - Gray[i+1,j+1]</td>
+<td>Gray[i,j] 为奇数行（中心）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>注</strong>：由于 ROD 奇偶行错位，<code>sd_cal</code> 矩阵中的垂直相邻像素在物理上并非完全垂直，而是包含了水平偏移。因此，垂直减法等同于水平梯度提取。</p>
+</blockquote>
+<h4 id="关键约束">关键约束 </h4>
+<ol>
+<li>边界处理：最后一行（i = H-1）与最后一列（j = W-1）无有效邻居，差分结果强制置0。</li>
+<li>数据范围：输入为归一化灰度图（float32，0.0~1.0），输出为量化后的int8（-128 ~ +127）。</li>
+<li>布局适配：通过奇偶行差分方向的差异化定义，完美适配传感器Rod阵列的交错布局，避免梯度方向颠倒。</li>
+</ol>
+<h3 id="3623-与仿真流程的集成逻辑">3.6.2.3 与仿真流程的集成逻辑 </h3>
+<p>SD计算模块位于FIFO缓冲区之后、FPN噪声注入之前，输入为经过ROD下采样、添加光子噪声与读出噪声的Rod灰度图（rod_img），输出为原始空间差分图，后续流程如下：</p>
+<ol>
+<li>输入：rod_img（float32，H/2 × W/4）→ 经灰度化与ROD采样后的单通道图。</li>
+<li>SD计算：生成sdl与sdr（int8，H/2 × W/4）。</li>
+<li>噪声注入：为sdl/sdr添加固定模式噪声（FPN），区分奇帧/偶帧（sim_cnt % 2 == 0 用偶帧FPN，否则用奇帧FPN）。</li>
+<li>额外噪声：叠加固定坏点噪声与Skellam分布随机噪声，模拟硬件真实干扰。</li>
+<li>阈值量化：通过阈值过滤低幅度噪声，最终输出稀疏编码后的SD数据（仅保留显著边缘）。</li>
+</ol>
+<h3 id="3624-数据格式与硬件对齐">3.6.2.4 数据格式与硬件对齐 </h3>
+<table>
+<thead>
+<tr>
+<th>输出张量</th>
+<th>数据类型</th>
+<th>形状</th>
+<th>值域</th>
+<th>硬件对应关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SDL</td>
+<td>int8</td>
+<td>（H/2, W/4）</td>
+<td>-128 ~ +127</td>
+<td>传感器垂直空间差分比较器输出</td>
+</tr>
+<tr>
+<td>SDR</td>
+<td>int8</td>
+<td>（H/2, W/4）</td>
+<td>-128 ~ +127</td>
+<td>传感器水平空间差分比较器输出</td>
+</tr>
+<tr>
+<td>组合输出</td>
+<td>int8</td>
+<td>（H/2, W/4, 2）</td>
+<td>-128 ~ +127</td>
+<td>与真实硬件TSD数据格式完全一致，可直接用于算法测试</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3625-仿真验证标准">3.6.2.5 仿真验证标准 </h3>
+<ol>
+<li>形状一致性：输出sdl/sdr形状与输入sd_cal完全一致，边界（最后一行/列）全为0。</li>
+<li>符号正确性：奇偶行差分结果符合核心定义，无方向颠倒。</li>
+<li>值域合规性：输出数据严格在int8值域（-128 ~ +127）内，无溢出。</li>
+<li>硬件适配性：差分规则与传感器交错行布局匹配，可直接对接后续ISP处理流程。</li>
+</ol>
+<blockquote>
+<p>（注：文档部分内容可能由 AI 生成）</p>
+</blockquote>
+<h3 id="37-阈值量化模块">3.7 阈值量化模块 </h3>
+<p><strong>功能</strong>:</p>
+<ol>
+<li>阈值判断：差分绝对值低于阈值置零（稀疏编码）</li>
+<li>ADC量化：浮点数差分转换为整数输出</li>
+</ol>
+<p><strong>代码位置</strong>: <a href="../tianmoucv/tianmoucv/sim/simple_tmc_sim_advance.py#L79-L91">simple_tmc_sim_advance.py:79-91</a></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-def">def</span> <span class="token function">diff_quant</span><span class="token punctuation">(</span>diff<span class="token punctuation">,</span> th<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    max_digi_num <span class="token operator">=</span> <span class="token number">2</span> <span class="token operator">**</span> <span class="token punctuation">(</span>adc_bit_prec <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span>  <span class="token comment"># 8bit → 128</span>
+    lin_lsb <span class="token operator">=</span> <span class="token number">1.0</span> <span class="token operator">/</span> max_digi_num            <span class="token comment"># LSB = 1/128</span>
+    
+    <span class="token comment"># 阈值处理：低于阈值置零</span>
+    diff_th <span class="token operator">=</span> <span class="token punctuation">(</span>diff <span class="token operator">-</span> th<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token punctuation">(</span>diff <span class="token operator">&gt;</span> th<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token punctuation">(</span>diff <span class="token operator">+</span> th<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token punctuation">(</span>diff <span class="token operator">&lt;</span> <span class="token operator">-</span>th<span class="token punctuation">)</span>
+    
+    <span class="token comment"># 量化：浮点 → 整数</span>
+    diff_quantized <span class="token operator">=</span> diff_th <span class="token operator">/</span> lin_lsb
+    diff_quantized <span class="token operator">=</span> diff_quantized<span class="token punctuation">.</span>clip<span class="token punctuation">(</span><span class="token builtin">min</span><span class="token operator">=</span><span class="token operator">-</span>max_digi_num<span class="token punctuation">,</span> <span class="token builtin">max</span><span class="token operator">=</span>max_digi_num<span class="token punctuation">)</span>
+    diff_quantized <span class="token operator">=</span> 取整 → 转换为int8
+    
+    <span class="token keyword keyword-return">return</span> diff_quantized
+</code></pre><p><strong>量化原理</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>差分范围</th>
+<th>输出int8 (8bit ADC)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>diff &gt; th</td>
+<td>正整数</td>
+</tr>
+<tr>
+<td>-th ≤ diff ≤ th</td>
+<td>0</td>
+</tr>
+<tr>
+<td>diff &lt; -th</td>
+<td>负整数</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>输入: <code>[H, W]</code> float32</li>
+<li>输出: <code>[H, W]</code> int8，范围 [-128, 127]</li>
+<li><strong>仿真硬件</strong>:
+<ul>
+<li>阈值处理 → <strong>比较器</strong></li>
+<li>量化 → <strong>模数转换器(ADC)</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="38-td符号分离模块">3.8 TD符号分离模块 </h3>
+<p>将TD的正负值分离到两个通道。</p>
+<p><strong>代码位置</strong>: <a href="../tianmoucv/tianmoucv/sim/simple_tmc_sim.py#L23-L29">simple_tmc_sim.py:23-29</a></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-def">def</span> <span class="token function">tdiff_split</span><span class="token punctuation">(</span>td_<span class="token punctuation">,</span>cdim <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    td_pos <span class="token operator">=</span> td_<span class="token punctuation">.</span>clone<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    td_pos<span class="token punctuation">[</span>td_pos<span class="token operator">&lt;</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+    td_neg <span class="token operator">=</span> td_<span class="token punctuation">.</span>clone<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    td_neg<span class="token punctuation">[</span>td_neg<span class="token operator">&gt;</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+    td <span class="token operator">=</span> torch<span class="token punctuation">.</span>stack<span class="token punctuation">(</span><span class="token punctuation">[</span>td_pos<span class="token punctuation">,</span>td_neg<span class="token punctuation">]</span><span class="token punctuation">,</span>dim<span class="token operator">=</span>cdim<span class="token punctuation">)</span>
+    <span class="token keyword keyword-return">return</span> td
+</code></pre><ul>
+<li>输入: <code>[H, W]</code> td</li>
+<li>输出: <code>[2, H, W]</code> → [正差分通道, 负差分通道]</li>
+<li><strong>原因</strong>: 硬件上正负差分由不同比较器处理，分开存储</li>
+</ul>
+<hr>
+<h2 id="4-数据流程">4. 数据流程 </h2>
+<h3 id="41-数据流图">4.1 数据流图 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text text"><code>┌─────────────────────────────────────────────────────────────────────────┐
+│                    输入: 单帧RGB图像                                     │
+│  Shape: [H, W, 3]  dtype: uint8 (0-255)                                 │
+└────────────┬────────────────────────────────────────────────────────────┘
+             ↓
+    ┌───────▼─────────┐
+    │   灰度化预处理   │
+    │  [H, W] float32 │
+    └───────┬─────────┘
+             ↓
+    ┌───────▼──────────────┐
+    │  ROD 2×2分簇下采样    │
+    │ [H/2, W/4] float32   │
+    └───────┬──────────────┘
+             ↓
+    ┌───────┴──────────────┐
+    │  添加光子噪声+读出噪声  │
+    │  [H/2, W/4] float32   │
+    └───────┬──────────────┘
+             ↓
+    ┌───────▼──────────────┐
+    │   FIFO push_to_fifo   │
+    │  [2, H/2, W/4]        │ ← 缓冲区: [前一帧, 当前帧]
+    └───────┬──────────────┘
+             ↓
+    ┌───────┼──────────────┐
+    │       ↓              ↓
+    │    TD计算         SD计算  
+    │  [H/2, W/4]    [H/2, W/4] × 2 (SDL + SDR)
+    └───────┬──────────────┘
+             ↓
+    ┌───────▼──────────────┐
+    │   添加FPN固定噪声      │
+    │  (奇帧/偶帧不同)       │
+    └───────┬──────────────┘
+             ↓
+    ┌───────▼──────────────┐
+    │  添加额外噪声         │
+    │  固定噪声 + Skellam   │
+    └───────┬──────────────┘
+             ↓
+    ┌───────▼──────────────┐
+    │   阈值 + ADC量化      │
+    │  [H/2, W/4] int8 × 3  │ ← TD + SDL + SDR
+    └───────┬──────────────┘
+             ↓
+    ┌───────▼──────────────┐
+    │    保存到文件         │
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    输出: tsdiff_{sim_cnt}.npy                            │
+│  Shape: [rod_height, rod_width, 3]  dtype: int8                          │
+│  [:,:,0] → TD,  [:,:,1] → SDL,  [:,:,2] → SDR                            │
+└─────────────────────────────────────────────────────────────────────────┘
+</code></pre><h3 id="42-尺寸变换汇总表">4.2 尺寸变换汇总表 </h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>高度</th>
+<th>宽度</th>
+<th>通道</th>
+<th>数据类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入RGB</td>
+<td>H = sensor_height</td>
+<td>W = sensor_width</td>
+<td>3</td>
+<td>uint8</td>
+</tr>
+<tr>
+<td>灰度化</td>
+<td>H</td>
+<td>W</td>
+<td>1</td>
+<td>float32</td>
+</tr>
+<tr>
+<td>ROD下采样</td>
+<td><strong>H//2</strong></td>
+<td><strong>W//4</strong></td>
+<td>1</td>
+<td>float32</td>
+</tr>
+<tr>
+<td>FIFO缓冲区</td>
+<td>2 × (H//2)</td>
+<td>W//4</td>
+<td>2</td>
+<td>float32</td>
+</tr>
+<tr>
+<td>TD输出</td>
+<td>H//2</td>
+<td>W//4</td>
+<td>1</td>
+<td>int8</td>
+</tr>
+<tr>
+<td>SDL输出</td>
+<td>H//2</td>
+<td>W//4</td>
+<td>1</td>
+<td>int8</td>
+</tr>
+<tr>
+<td>SDR输出</td>
+<td>H//2</td>
+<td>W//4</td>
+<td>1</td>
+<td>int8</td>
+</tr>
+<tr>
+<td>保存文件</td>
+<td>H//2</td>
+<td>W//4</td>
+<td>3</td>
+<td>int8</td>
+</tr>
+<tr>
+<td>SDXY输出</td>
+<td>H//2</td>
+<td><strong>W//2</strong></td>
+<td>2</td>
+<td>float32</td>
+</tr>
+</tbody>
+</table>
+<p><strong>示例</strong>: sensor_width = 640, sensor_height = 320</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>高度</th>
+<th>宽度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入</td>
+<td>320</td>
+<td>640</td>
+</tr>
+<tr>
+<td>ROD输出</td>
+<td><strong>160</strong></td>
+<td><strong>160</strong></td>
+</tr>
+<tr>
+<td>TD/SDL/SDR</td>
+<td>160</td>
+<td>160</td>
+</tr>
+<tr>
+<td>SDXY</td>
+<td>160</td>
+<td><strong>320</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-输入输出格式">5. 输入输出格式 </h2>
+<h3 id="51-输入">5.1 输入 </h3>
+<h4 id="511-高级版-run_sim">5.1.1 高级版: run_sim() </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-from">from</span> tianmoucv<span class="token punctuation">.</span>sim <span class="token keyword keyword-import">import</span> run_sim
+run_sim<span class="token punctuation">(</span>
+    datapath<span class="token operator">=</span><span class="token string">'/path/to/images'</span><span class="token punctuation">,</span>         <span class="token comment"># 图像文件夹</span>
+    sensor_width<span class="token operator">=</span><span class="token number">640</span><span class="token punctuation">,</span>                   <span class="token comment"># 目标宽度</span>
+    sensor_height<span class="token operator">=</span><span class="token number">320</span><span class="token punctuation">,</span>                 <span class="token comment"># 目标高度</span>
+    device<span class="token operator">=</span>device<span class="token punctuation">,</span>                      <span class="token comment"># cuda/cpu</span>
+    display<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>                      <span class="token comment"># 是否显示</span>
+    save<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>                          <span class="token comment"># 是否保存</span>
+    save_path<span class="token operator">=</span><span class="token string">'./output'</span>               <span class="token comment"># 保存路径</span>
+<span class="token punctuation">)</span>
+</code></pre><p><strong>输入要求</strong>:</p>
+<ul>
+<li><code>datapath</code> 文件夹中包含 <code>.png</code> 或 <code>.jpg</code> 图像</li>
+<li>文件名按数字排序，程序会自动提取数字排序</li>
+<li>每张图像是标准RGB彩色图像，8bit (0-255)</li>
+<li>图像按时间顺序排列（视频帧序列）</li>
+</ul>
+<h4 id="512-简单版-run_sim_singleimg">5.1.2 简单版: run_sim_singleimg() </h4>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-from">from</span> tianmoucv<span class="token punctuation">.</span>sim <span class="token keyword keyword-import">import</span> run_sim_singleimg
+result <span class="token operator">=</span> run_sim_singleimg<span class="token punctuation">(</span>
+    img<span class="token punctuation">,</span>                <span class="token comment"># [H, W, 3] numpy array</span>
+    sensor_width<span class="token operator">=</span><span class="token number">640</span><span class="token punctuation">,</span>
+    sensor_height<span class="token operator">=</span><span class="token number">320</span><span class="token punctuation">,</span>
+    xy<span class="token operator">=</span><span class="token boolean">True</span>
+<span class="token punctuation">)</span>
+</code></pre><p><strong>输入</strong>: 单张RGB图像 <code>[H, W, 3]</code> numpy</p>
+<h3 id="52-输出">5.2 输出 </h3>
+<h4 id="521-输出目录结构-run_sim">5.2.1 输出目录结构 (run_sim) </h4>
+<pre data-role="codeBlock" data-info="" class="language-text text"><code>save_path/
+├── rgb/                      # RGB参考帧
+│   └── frame_0000.png        # 每cop_cone_skip(=10)帧保存一个
+│   └── frame_0001.png
+│
+├── tsdiff/                   # 时间空间差分数据
+│   └── tsdiff_0.npy          # 每个帧一个文件
+│   └── tsdiff_1.npy
+│
+├── noisy_gt/                 # 带噪声的ground truth
+│   └── noisyGT_0.npy
+│   └── noisyGT_1.npy
+│
+├── viz/                      # 可视化结果
+│   └── sim_viz_0.png
+│   └── sim_viz_1.png
+│
+└── fpn.npy                   # 本次仿真的固定模式噪声
+</code></pre><h4 id="522-单个文件格式">5.2.2 单个文件格式 </h4>
+<p><strong>(1) tsdiff/{sim_cnt}.npy</strong></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># 读取后shape: [rod_height, rod_width, 3]</span>
+tsdiff <span class="token operator">=</span> np<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">'tsdiff_0.npy'</span><span class="token punctuation">)</span>
+
+td <span class="token operator">=</span> tsdiff<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span>      <span class="token comment"># 时间差分 → int8</span>
+sdl <span class="token operator">=</span> tsdiff<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span>     <span class="token comment"># 垂直空间差分 → int8</span>
+sdr <span class="token operator">=</span> tsdiff<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span>     <span class="token comment"># 水平空间差分 → int8</span>
+</code></pre><ul>
+<li>数据类型: <code>int8</code></li>
+<li>取值范围: <code>-128</code> ∼ <code>+127</code></li>
+<li>0表示差分低于阈值，不输出</li>
+</ul>
+<p><strong>(2) noisy_gt/noisyGT_{sim_cnt}.npy</strong></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># shape: [rod_height, rod_width]</span>
+gt <span class="token operator">=</span> np<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">'noisyGT_0.npy'</span><span class="token punctuation">)</span>
+</code></pre><ul>
+<li>数据类型: <code>float32</code></li>
+<li>内容: 添加所有噪声后的rod强度图</li>
+<li>用途: 作为重建任务的ground truth</li>
+</ul>
+<p><strong>(3) rgb/frame_xxxx.png</strong></p>
+<ul>
+<li>尺寸: <code>[sensor_height, sensor_width, 3]</code></li>
+<li>类型: <code>uint8</code> RGB</li>
+<li>说明: 每10帧保存一个完整RGB帧，对应sensor的cone输出</li>
+</ul>
+<p><strong>(4) fpn.npy</strong></p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># shape: [rod_height, rod_width, 6]</span>
+fpn <span class="token operator">=</span> np<span class="token punctuation">.</span>load<span class="token punctuation">(</span><span class="token string">'fpn.npy'</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 通道顺序:</span>
+<span class="token comment"># [:, :, 0] → td_odd</span>
+<span class="token comment"># [:, :, 1] → sdl_odd</span>
+<span class="token comment"># [:, :, 2] → sdr_odd</span>
+<span class="token comment"># [:, :, 3] → td_even</span>
+<span class="token comment"># [:, :, 4] → sdl_even</span>
+<span class="token comment"># [:, :, 5] → sdr_even</span>
+</code></pre><ul>
+<li>内容: 本次仿真使用的固定模式噪声</li>
+<li>用途: 可用于后续噪声分析</li>
+</ul>
+<h4 id="523-run_sim_singleimg-返回值">5.2.3 run_sim_singleimg() 返回值 </h4>
+<p>当 <code>xy=True</code>:</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>img_ref_tensor<span class="token punctuation">,</span> img_target_tensor<span class="token punctuation">,</span> td<span class="token punctuation">,</span> sd0<span class="token punctuation">,</span> sd1 <span class="token operator">=</span> run_sim_singleimg<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+</code></pre><table>
+<thead>
+<tr>
+<th>返回值</th>
+<th>Shape</th>
+<th>Type</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>img_ref_tensor</code></td>
+<td><code>[3, H, W]</code></td>
+<td>float32</td>
+<td>前一帧（平移后）</td>
+</tr>
+<tr>
+<td><code>img_target_tensor</code></td>
+<td><code>[3, H, W]</code></td>
+<td>float32</td>
+<td>当前帧</td>
+</tr>
+<tr>
+<td><code>td</code></td>
+<td><code>[2, H/2, W/2]</code></td>
+<td>int8</td>
+<td>TD分离正负 → [正TD, 负TD]</td>
+</tr>
+<tr>
+<td><code>sd0</code></td>
+<td><code>[2, H/2, W/2]</code></td>
+<td>float32</td>
+<td>前一帧SD → [sdl, sdr]</td>
+</tr>
+<tr>
+<td><code>sd1</code></td>
+<td><code>[2, H/2, W/2]</code></td>
+<td>float32</td>
+<td>当前帧SD → [sdl, sdr]</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-硬件对应关系总表">6. 硬件对应关系总表 </h2>
+<table>
+<thead>
+<tr>
+<th>软件模块</th>
+<th>对应天眸硬件</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>simpleSim_params.json</code> 配置</td>
+<td>配置寄存器</td>
+<td>存储阈值、ADC精度等参数</td>
+</tr>
+<tr>
+<td>灰度化</td>
+<td>Rod光敏单元</td>
+<td>Rod只响应亮度，不需要色彩</td>
+</tr>
+<tr>
+<td>2×2分簇下采样</td>
+<td>ROD感光阵列</td>
+<td>合并像素提高灵敏度，降低分辨率</td>
+</tr>
+<tr>
+<td>泊松噪声</td>
+<td>光子量子特性</td>
+<td>光子散粒噪声</td>
+</tr>
+<tr>
+<td>高斯读出噪声</td>
+<td>读出电路</td>
+<td>电路热噪声</td>
+</tr>
+<tr>
+<td>FIFO缓存</td>
+<td>移位寄存器/行缓存</td>
+<td>存储前一帧数据</td>
+</tr>
+<tr>
+<td>TD计算</td>
+<td>时间差分比较器</td>
+<td>检测帧间强度变化</td>
+</tr>
+<tr>
+<td>SDL计算</td>
+<td>垂直空间差分比较器</td>
+<td>检测垂直方向梯度</td>
+</tr>
+<tr>
+<td>SDR计算</td>
+<td>水平空间差分比较器</td>
+<td>检测水平方向梯度</td>
+</tr>
+<tr>
+<td>FPN奇/偶帧分离</td>
+<td>固定模式噪声</td>
+<td>制造工艺不均匀性</td>
+</tr>
+<tr>
+<td>额外固定噪声</td>
+<td>列/行驱动电路</td>
+<td>系统固定偏移</td>
+</tr>
+<tr>
+<td>Skellam噪声</td>
+<td>混合噪声源</td>
+<td>多个独立噪声源的综合效应</td>
+</tr>
+<tr>
+<td>阈值处理</td>
+<td>比较器</td>
+<td>稀疏编码，只输出显著变化</td>
+</tr>
+<tr>
+<td>ADC量化</td>
+<td>模数转换器</td>
+<td>模拟差分 → 数字编码</td>
+</tr>
+<tr>
+<td>TD符号分离</td>
+<td>双比较器设计</td>
+<td>正负差分分开处理</td>
+</tr>
+<tr>
+<td>SD2XY变换</td>
+<td>后处理单元</td>
+<td>原生格式 → 梯度格式</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="7-使用示例">7. 使用示例 </h2>
+<h3 id="71-完整视频仿真">7.1 完整视频仿真 </h3>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-from">from</span> tianmoucv<span class="token punctuation">.</span>sim <span class="token keyword keyword-import">import</span> run_sim
+<span class="token keyword keyword-import">import</span> torch
+
+<span class="token comment"># 设备选择</span>
+device <span class="token operator">=</span> torch<span class="token punctuation">.</span>device<span class="token punctuation">(</span><span class="token string">'cuda'</span> <span class="token keyword keyword-if">if</span> torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>is_available<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword keyword-else">else</span> <span class="token string">'cpu'</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 参数设置</span>
+data_path <span class="token operator">=</span> <span class="token string">'./input_frames'</span>      <span class="token comment"># 输入图像文件夹</span>
+sensor_width <span class="token operator">=</span> <span class="token number">640</span>               <span class="token comment"># 传感器宽度</span>
+sensor_height <span class="token operator">=</span> <span class="token number">320</span>              <span class="token comment"># 传感器高度</span>
+
+<span class="token comment"># 运行仿真</span>
+run_sim<span class="token punctuation">(</span>
+    data_path<span class="token punctuation">,</span> 
+    sensor_width<span class="token punctuation">,</span> 
+    sensor_height<span class="token punctuation">,</span>
+    device<span class="token punctuation">,</span> 
+    display<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> 
+    save<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> 
+    save_path<span class="token operator">=</span><span class="token string">'./output_tianmouc'</span>
+<span class="token punctuation">)</span>
+</code></pre><h3 id="72-单帧测试">7.2 单帧测试 </h3>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-from">from</span> tianmoucv<span class="token punctuation">.</span>sim <span class="token keyword keyword-import">import</span> run_sim_singleimg
+<span class="token keyword keyword-import">import</span> cv2
+
+<span class="token comment"># 读取图像</span>
+img <span class="token operator">=</span> cv2<span class="token punctuation">.</span>imread<span class="token punctuation">(</span><span class="token string">'test.jpg'</span><span class="token punctuation">)</span>
+
+<span class="token comment"># 运行仿真</span>
+img_pre<span class="token punctuation">,</span> img_curr<span class="token punctuation">,</span> td<span class="token punctuation">,</span> sd0<span class="token punctuation">,</span> sd1 <span class="token operator">=</span> run_sim_singleimg<span class="token punctuation">(</span>
+    img<span class="token punctuation">,</span> 
+    sensor_width<span class="token operator">=</span><span class="token number">640</span><span class="token punctuation">,</span> 
+    sensor_height<span class="token operator">=</span><span class="token number">320</span><span class="token punctuation">,</span>
+    xy<span class="token operator">=</span><span class="token boolean">True</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"TD shape: </span><span class="token interpolation"><span class="token punctuation">{</span>td<span class="token punctuation">.</span>shape<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>      <span class="token comment"># → [2, 160, 320]</span>
+<span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"SD0 shape: </span><span class="token interpolation"><span class="token punctuation">{</span>sd0<span class="token punctuation">.</span>shape<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>    <span class="token comment"># → [2, 160, 160]</span>
+<span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"SD1 shape: </span><span class="token interpolation"><span class="token punctuation">{</span>sd1<span class="token punctuation">.</span>shape<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>    <span class="token comment"># → [2, 160, 160]</span>
+</code></pre><h3 id="73-从sd获取xy梯度">7.3 从SD获取XY梯度 </h3>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token keyword keyword-from">from</span> tianmoucv<span class="token punctuation">.</span>isp <span class="token keyword keyword-import">import</span> SD2XY
+<span class="token keyword keyword-import">import</span> torch
+
+<span class="token comment"># sd shape: [2, H, W] → [sdl, sdr]</span>
+sd <span class="token operator">=</span> sd1  <span class="token comment"># 当前帧SD</span>
+sdx<span class="token punctuation">,</span> sdy <span class="token operator">=</span> SD2XY<span class="token punctuation">(</span>sd<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"sdx shape: </span><span class="token interpolation"><span class="token punctuation">{</span>sdx<span class="token punctuation">.</span>shape<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>    <span class="token comment"># → [H/2, W/2]</span>
+<span class="token keyword keyword-print">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"sdy shape: </span><span class="token interpolation"><span class="token punctuation">{</span>sdy<span class="token punctuation">.</span>shape<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>    <span class="token comment"># → [H/2, W/2]</span>
+<span class="token comment"># sdx = x方向梯度，sdy = y方向梯度</span>
+</code></pre><hr>
+<h2 id="8-版本对比">8. 版本对比 </h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>simple_tmc_sim.py</th>
+<th>simple_tmc_sim_advance.py</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入</td>
+<td>单张图像</td>
+<td>图像序列文件夹</td>
+</tr>
+<tr>
+<td>输出</td>
+<td>直接返回tensor</td>
+<td>保存文件到磁盘</td>
+</tr>
+<tr>
+<td>FPN噪声</td>
+<td>❌ 不支持</td>
+<td>✅ 支持奇/偶帧</td>
+</tr>
+<tr>
+<td>泊松噪声</td>
+<td>✅ 可选</td>
+<td>✅ 默认开启</td>
+</tr>
+<tr>
+<td>使用场景</td>
+<td>快速测试</td>
+<td>批量生成数据集</td>
+</tr>
+<tr>
+<td>入口函数</td>
+<td><code>run_sim_singleimg()</code></td>
+<td><code>run_sim()</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="总结">总结 </h2>
+<p>该仿真器完整模拟了天眸互补视觉传感器的工作流程：</p>
+<ol>
+<li><strong>仿生架构</strong> → 遵循真实硬件的ROD分簇结构，2×2像素合并</li>
+<li><strong>完整噪声模型</strong> → 包括光子噪声、读出噪声、固定模式噪声等多种噪声</li>
+<li><strong>稀疏编码</strong> → 只有超过阈值的变化才输出，大幅压缩带宽</li>
+<li><strong>多模态输出</strong> → 同时输出时间差分(TD)和空间差分(SD)</li>
+<li><strong>数据兼容性</strong> → 输出格式与真实硬件完全一致，仿真数据可直接用于算法开发</li>
+</ol>
+<p>仿真器生成的TSD数据保留了<strong>运动信息</strong>(TD)和<strong>边缘纹理信息</strong>(SD)，同时通过稀疏编码实现了<strong>90%带宽压缩</strong>，这正是天眸传感器能够实现<strong>10000fps</strong>高速成像的核心原理。</p>
+
+      </div>
+      
+      
+    
+    
+    <script type="module">
+// TODO: If ZenUML gets integrated into mermaid in the future,
+//      we can remove the following lines.
+
+
+var MERMAID_CONFIG = ({"startOnLoad":false});
+if (typeof MERMAID_CONFIG !== 'undefined') {
+  MERMAID_CONFIG.startOnLoad = false
+  MERMAID_CONFIG.cloneCssStyles = false
+  MERMAID_CONFIG.theme = "default"
+}
+
+mermaid.initialize(MERMAID_CONFIG || {})
+if (typeof(window['Reveal']) !== 'undefined') {
+  function mermaidRevealHelper(event) {
+    var currentSlide = event.currentSlide
+    var diagrams = currentSlide.querySelectorAll('.mermaid')
+    for (var i = 0; i < diagrams.length; i++) {
+      var diagram = diagrams[i]
+      if (!diagram.hasAttribute('data-processed')) {
+        mermaid.init(null, diagram, ()=> {
+          Reveal.slide(event.indexh, event.indexv)
+        })
+      }
+    }
+  }
+  Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+  Reveal.addEventListener('ready', mermaidRevealHelper)
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+} else {
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+}
+</script>
+    
+    
+    
+  
+      <div style="background-color: #f8f9fa; padding: 15px; border-top: 1px solid #dee2e6; margin-top: 40px; font-family: sans-serif;">
+          <a href="index.html" style="text-decoration: none; color: #2980b9; font-weight: bold;">← 返回主页 (Back to Home)</a>
+      </div>
+    </body></html>
